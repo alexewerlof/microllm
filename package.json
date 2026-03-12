@@ -1,0 +1,22 @@
+{
+  "name": "microllm",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "node --import tsx --test",
+    "node-chat": "tsx ./src/node-chat.ts"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "devDependencies": {
+    "tsx": "^4.21.0"
+  },
+  "dependencies": {
+    "@huggingface/transformers": "^3.8.1",
+    "jty": "^5.1.0",
+    "onnxruntime-node": "^1.21.0"
+  }
+}
