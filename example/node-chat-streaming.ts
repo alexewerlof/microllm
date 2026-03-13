@@ -1,4 +1,4 @@
-import { createAssistantMessage, createUserMessage } from "../src/Message/factories"
+import { createUserMessage } from "../src/Message/factories"
 import { MicroLLM } from "../src/MicroLLM"
 
 
@@ -26,9 +26,13 @@ async function main() {
         } else {
             messages.push(createUserMessage(userInput))
             console.log('Response:')
-            const assistantContent = await llm.complete({ messages })
-            console.log(assistantContent)
-            messages.push(createAssistantMessage(assistantContent))
+            const buff = []
+            for await (const token of llm.generateTokens({ messages })) {
+                buff.push(token)
+                process.stdout.write(token) // streams to terminal incrementally
+            }
+            console.log()
+            messages.push({ role: 'assistant', content: buff.join('') })
         }
     } while (shouldContinue)
 
