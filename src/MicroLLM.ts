@@ -16,7 +16,7 @@ export class MicroLLM {
         this.transformersPipelineFactory = new TransformersPipelineFactory('text-generation', modelId, pipelineOptions)
     }
 
-    async *chatCompletion(params: {
+    async *generateTokens(params: {
         messages: Message[],
         config?: Partial<TextGenerationConfig>,
     }): AsyncGenerator<string, void, unknown> {

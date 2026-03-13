@@ -24,7 +24,7 @@ async function main() {
     const buff = []
     const tools = new Tools()
     tools.addTool('get_time', 'Get the current time').func = getTime
-    for await (const token of llm.chatCompletion({
+    for await (const token of llm.generateTokens({
         messages,
         tools,
     })) {

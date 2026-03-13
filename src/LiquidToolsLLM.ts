@@ -42,7 +42,7 @@ export class LiquidToolsLLM extends MicroLLM {
         return decoded[0].slice(promptTexts[0].length)
     }
 
-    async *chatCompletion(params: {
+    async *generateTokens(params: {
         messages: Message[]
         tools: Tools
     }): AsyncGenerator<string, void, unknown> {

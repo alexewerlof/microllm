@@ -27,7 +27,7 @@ async function main() {
             messages.push(createUserMessage(userInput))
             console.log('Response:')
             const buff = []
-            for await (const token of llm.chatCompletion({ messages })) {
+            for await (const token of llm.generateTokens({ messages })) {
                 buff.push(token)
                 process.stdout.write(token) // streams to terminal incrementally
             }
