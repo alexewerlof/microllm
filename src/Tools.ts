@@ -1,4 +1,4 @@
-import { ToolCallObj, ToolResultMessage } from './Message/types.js'
+import { ToolCallObj, ToolCallsMessage, ToolResultMessage } from './Message/types.js'
 import { createToolResultMessage } from './Message/factories.js'
 import { FunctionTool, FunctionToolDeclaration } from './FunctionTool.js'
 
@@ -33,9 +33,7 @@ export class Tools {
         return createToolResultMessage(id, tool ? await tool.invoke(argsStr): `Error: No tool found with the name "${name}"`)
     }
 
-    async exeToolCalls(toolsCallMessage: {
-        tool_calls: ToolCallObj[]
-    }): Promise<ToolResultMessage[]> {
+    async exeToolCalls(toolsCallMessage: ToolCallsMessage): Promise<ToolResultMessage[]> {
         const functionCalls = toolsCallMessage.tool_calls.filter((t) => t.type === 'function')
         const toolResultMessages: ToolResultMessage[] = []
         for (const toolCall of functionCalls) {
