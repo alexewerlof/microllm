@@ -1,7 +1,8 @@
-import { Message, PretrainedModelOptions, TextGenerationConfig, TextStreamer } from "@huggingface/transformers"
+import { Message, PretrainedModelOptions, StoppingCriteriaList, TextGenerationConfig, TextStreamer } from "@huggingface/transformers"
 import { TransformersPipelineFactory } from "./TransformersPipelineFactory"
-import { isObj } from "jty"
+import { isA, isDef, isObj } from "jty"
 import { normalizeMessageArray } from "./normalization"
+import { SignalStoppingCriteria } from "./SignalStoppingCriteria"
 
 const defaultTextGenerationConfig: Partial<TextGenerationConfig> = {
     max_new_tokens: 128,
@@ -19,11 +20,25 @@ export class MicroLLM {
     async *generateTokens(params: {
         messages: Message[],
         config?: Partial<TextGenerationConfig>,
+        signal?: AbortSignal,
     }): AsyncGenerator<string, void, unknown> {
         if (!isObj(params)) {
             throw new TypeError(`Expected object for params, but got ${params} (${typeof params})`)
         }
-        const { messages, config } = params
+        const { signal, messages, config } = params
+
+        const stoppingCriteria: {
+            stopping_criteria?: StoppingCriteriaList
+        } = {}
+        if (isDef(signal)) {
+            if (signal.aborted) {
+                throw new Error('The signal is already aborted. Cannot start generation.')
+            }
+            Object.assign(stoppingCriteria, {
+                stopping_criteria: SignalStoppingCriteria.createStoppingCriteriaList(signal)
+            })
+        }
+
         if (!Array.isArray(messages)) {
             throw new TypeError(`Expected array for messages, but got ${messages} (${typeof messages})`)
         }
@@ -49,6 +64,7 @@ export class MicroLLM {
         const generatePromise = pipelineInstance(normalizedMessages, {
             ...defaultTextGenerationConfig,
             ...config,
+            ...stoppingCriteria,
             streamer,
         })
         
