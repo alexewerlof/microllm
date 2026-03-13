@@ -1,8 +1,11 @@
 import { isArr, isDef, isPOJO, isStr } from "jty"
 import { AssistantMessage, SupportedMessage, ToolCallObj, ToolCallsMessage } from "./Message/types"
-import { isSupportedMessageArr, isToolCallObj, isToolCallsMessage } from "./Message/guards"
+import { isAssistantMessage, isSupportedMessageArr, isToolCallObj, isToolCallsMessage } from "./Message/guards"
 import { Message } from "@huggingface/transformers"
 import { createAssistantMessage } from "./Message/factories"
+
+const TOOL_CALL_START_TOKEN = '<|tool_call_start|>'
+const TOOL_CALL_END_TOKEN = '<|tool_call_end|>'
 
 /**
  * Removes tool call start and end tokens from a text string.
@@ -13,7 +16,7 @@ import { createAssistantMessage } from "./Message/factories"
  */
 export function stripToolCallTokens(text: string): string {
     if (!isStr(text)) return text
-    return text.replaceAll('<|tool_call_start|>', '').replaceAll('<|tool_call_end|>', '')
+    return text.replaceAll(TOOL_CALL_START_TOKEN, '').replaceAll(TOOL_CALL_END_TOKEN, '')
 }
 
 export function generateRandomToolCallId(): string {
@@ -81,6 +84,57 @@ export function parsePythonToolCallObj(text: string): ToolCallObj[] {
             },
         },
     ]
+}
+
+export function parsePythonToToolCallsMessage(message: AssistantMessage): ToolCallsMessage {
+    if (!isAssistantMessage(message)) {
+        throw new Error(`Expected an assistant message but got ${JSON.stringify(message)} (${typeof message})`)
+    }
+    const toolCallObjs = parsePythonToolCallObj(message.content)
+    return {
+        role: 'assistant',
+        tool_calls: toolCallObjs,
+    }
+}
+
+/**
+ * Parses an LFM2 assistant response containing Pythonic tool call tokens into a ToolCallsMessage.
+ * Expects the text to contain `<|tool_call_start|>[fn(args)]<|tool_call_end|>` markers.
+ * Returns null if the text does not contain a tool call start token.
+ *
+ * @param text The raw assistant response text.
+ * @returns A ToolCallsMessage if a valid tool call is detected, or null otherwise.
+ * @throws {SyntaxError} If the start token is found but the end token is missing, or if brackets are missing.
+ *
+ * @example
+ * ```ts
+ * tryParseToolCalls('<|tool_call_start|>[get_time()]<|tool_call_end|>') // => ToolCallsMessage
+ * tryParseToolCalls('Hello world') // => null
+ * ```
+ */
+export function tryParseToolCalls(text: string): ToolCallsMessage | null {
+    if (!isStr(text)) {
+        throw new TypeError(`Expected text to be a string, but got ${text} (${typeof text})`)
+    }
+
+    const startIdx = text.indexOf(TOOL_CALL_START_TOKEN)
+    if (startIdx === -1) return null
+
+    const afterStart = startIdx + TOOL_CALL_START_TOKEN.length
+    const endIdx = text.indexOf(TOOL_CALL_END_TOKEN, afterStart)
+    if (endIdx === -1) {
+        throw new SyntaxError(`Found ${TOOL_CALL_START_TOKEN} but missing ${TOOL_CALL_END_TOKEN} in ${text}`)
+    }
+
+    const inner = text.substring(afterStart, endIdx).trim()
+
+    if (!inner.startsWith('[') || !inner.endsWith(']')) {
+        throw new SyntaxError(`Expected tool call to be wrapped in brackets, but got: ${inner} in ${text}`)
+    }
+
+    const toolCallObjs = parsePythonToolCallObj(inner)
+
+    return { role: 'assistant', tool_calls: toolCallObjs }
 }
 
 function toolCallObjArgumentValueToPython(value: unknown): string {

@@ -1,6 +1,6 @@
 import { describe, test } from 'node:test'
 import assert from 'node:assert/strict'
-import { parsePythonToolCallObj, stripToolCallTokens, toolCallObjArgumentsToStr } from './liquid-tools-transpiler'
+import { parsePythonToolCallObj, stripToolCallTokens, toolCallObjArgumentsToStr, tryParseToolCalls } from './liquid-tools-transpiler'
 
 describe(stripToolCallTokens.name, () => {
     test('removes the special tokens', () => {
@@ -100,5 +100,57 @@ describe(toolCallObjArgumentsToStr.name, () => {
     test('returns empty string for undefined input', () => {
         assert.strictEqual(toolCallObjArgumentsToStr(undefined), '')
         assert.strictEqual(toolCallObjArgumentsToStr(''), '')
+    })
+})
+
+describe(tryParseToolCalls.name, () => {
+    test('parses a tool call wrapped in special tokens', () => {
+        const result = tryParseToolCalls('<|tool_call_start|>[get_time()]<|tool_call_end|>')
+        assert.notStrictEqual(result, null)
+        assert.strictEqual(result!.role, 'assistant')
+        assert.strictEqual(result!.tool_calls[0].function.name, 'get_time')
+    })
+
+    test('parses a tool call with surrounding text', () => {
+        const result = tryParseToolCalls('<|tool_call_start|>[search(query="hello")]<|tool_call_end|>\nSearching for hello.')
+        assert.notStrictEqual(result, null)
+        assert.strictEqual(result!.tool_calls[0].function.name, 'search')
+    })
+
+    test('returns null for regular text', () => {
+        assert.strictEqual(tryParseToolCalls('Hello world'), null)
+    })
+
+    test('returns null for text without special tokens', () => {
+        assert.strictEqual(tryParseToolCalls('[get_time()]'), null)
+    })
+
+    test('throws when start token is present but end token is missing', () => {
+        assert.throws(
+            () => tryParseToolCalls('<|tool_call_start|>[get_time()]'),
+            SyntaxError,
+        )
+    })
+
+    test('throws when brackets are missing inside tokens', () => {
+        assert.throws(
+            () => tryParseToolCalls('<|tool_call_start|>get_time()<|tool_call_end|>'),
+            SyntaxError,
+        )
+    })
+
+    test('parses a tool call with arguments', () => {
+        const result = tryParseToolCalls('<|tool_call_start|>[search(query="hello")]<|tool_call_end|>')
+        assert.notStrictEqual(result, null)
+        const args = JSON.parse(result!.tool_calls[0].function.arguments)
+        assert.strictEqual(args.query, 'hello')
+    })
+
+    test('throws when text is not a string', () => {
+        assert.throws(
+            // @ts-expect-error testing invalid input
+            () => tryParseToolCalls(123),
+            TypeError,
+        )
     })
 })
