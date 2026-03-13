@@ -101,14 +101,15 @@ export class TransformersPipelineFactory<TTask extends PipelineType> {
     }
 
     async #load() {
+        const logLine = `Create pipeline for task ${this.#task} and model ${this.#modelId}`
         try {
-            console.time(`Init embedder ${this.#modelId}`)
+            console.time(logLine)
             const instance = await createPipeline<TTask>(this.#task, this.#modelId, this.#pipelineOptions)
-            console.timeEnd(`Init embedder ${this.#modelId}`)
+            console.timeEnd(logLine)
             return instance
         } catch (error) {
             this.#pipeline = null
-            throw new Error(`Failed to load embedding model "${this.#modelId}": ${error}`, { cause: error })
+            throw new Error(`${logLine}: ${error}`, { cause: error })
         }
     }
 
