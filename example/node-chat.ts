@@ -1,4 +1,5 @@
 import { createAssistantMessage, createUserMessage } from "../src/Message/factories"
+import { SupportedMessage } from "../src/Message/types"
 import { MicroLLM } from "../src/MicroLLM"
 
 
@@ -7,7 +8,7 @@ async function main() {
         dtype: 'q4',
     })
 
-    const messages = [
+    const messages: SupportedMessage[] = [
         {
             role: 'system',
             content: 'You are a helpful assistant.'
@@ -27,8 +28,8 @@ async function main() {
             messages.push(createUserMessage(userInput))
             console.log('Response:')
             const assistantContent = await llm.complete({ messages })
-            console.log(assistantContent)
-            messages.push(createAssistantMessage(assistantContent))
+            console.log(assistantContent.content)
+            messages.push(assistantContent)
         }
     } while (shouldContinue)
 

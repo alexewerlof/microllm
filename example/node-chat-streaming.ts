@@ -1,4 +1,5 @@
 import { createUserMessage } from "../src/Message/factories"
+import { SupportedMessage } from "../src/Message/types"
 import { MicroLLM } from "../src/MicroLLM"
 
 
@@ -7,7 +8,7 @@ async function main() {
         dtype: 'q4',
     })
 
-    const messages = [
+    const messages: SupportedMessage[] = [
         {
             role: 'system',
             content: 'You are a helpful assistant.'
@@ -26,13 +27,12 @@ async function main() {
         } else {
             messages.push(createUserMessage(userInput))
             console.log('Response:')
-            const buff = []
-            for await (const token of llm.generateTokens({ messages })) {
-                buff.push(token)
-                process.stdout.write(token) // streams to terminal incrementally
-            }
+            const response = await llm.complete({
+                messages,
+                onToken: (token) => process.stdout.write(token),
+            })
             console.log()
-            messages.push({ role: 'assistant', content: buff.join('') })
+            messages.push(response)
         }
     } while (shouldContinue)
 

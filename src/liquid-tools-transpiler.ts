@@ -1,8 +1,8 @@
 import { isArr, isDef, isPOJO, isStr } from "jty"
 import { AssistantMessage, SupportedMessage, ToolCallObj, ToolCallsMessage } from "./Message/types"
-import { isAssistantMessage, isSupportedMessageArr, isToolCallObj, isToolCallsMessage } from "./Message/guards"
+import { isAssistantMessage, isMessage, isSupportedMessage, isSupportedMessageArr, isToolCallObj, isToolCallsMessage } from "./Message/guards"
 import { Message } from "@huggingface/transformers"
-import { createAssistantMessage } from "./Message/factories"
+import { createAssistantMessage, createSystemMessage, createToolResultMessage, createUserMessage } from "./Message/factories"
 
 const TOOL_CALL_START_TOKEN = '<|tool_call_start|>'
 const TOOL_CALL_END_TOKEN = '<|tool_call_end|>'
@@ -177,20 +177,130 @@ export function toolCallsMessageToPython(toolCallsMessage: ToolCallsMessage): As
 }
 
 /**
- * Formats OpenAI messages for compatibility with Python-style tool calls.
- * Specifically converts assistant tool_calls into Python-style function call strings.
+ * Converts a single supported message into the plain Message format expected by Liquid models.
+ * Tool call assistant messages are rendered into the Python-style syntax used by the tokenizer.
  *
- * @param messages An array of OpenAI message objects.
- * @returns The formatted messages suitable for the Python-style chat template used by LFM2.
+ * @param message A supported message.
+ * @returns A plain Message instance compatible with the Liquid chat template.
+ *
+ * @example
+ * ```ts
+ * convertSupportedMessageToLiquidMessage({ role: 'assistant', tool_calls: [toolCall] })
+ * // => { role: 'assistant', content: '[fn()]' }
+ * ```
  */
-export function convertToolCallsMsgToPython(messages: SupportedMessage[]): Message[] {
-    if (!isSupportedMessageArr(messages)) {
+export function convertSupportedMessageToLiquidMessage(message: SupportedMessage): Message {
+    if (!isSupportedMessage(message)) {
+        throw new TypeError(`Expected a supported message object. Got ${JSON.stringify(message)}`)
+    }
+
+    if (isToolCallsMessage(message)) {
+        return toolCallsMessageToPython(message)
+    }
+
+    return {
+        role: message.role,
+        content: message.content,
+    }
+}
+
+/**
+ * Converts supported messages into the plain Message format expected by Liquid models.
+ * Assistant tool calls are rewritten into the Python-style function call syntax used by LFM2.
+ *
+ * @param messages An array of supported messages.
+ * @returns The formatted messages suitable for the Liquid chat template.
+ *
+ * @example
+ * ```ts
+ * convertSupportedMessagesToLiquidMessages([
+ *   { role: 'user', content: 'Hi' },
+ *   { role: 'assistant', tool_calls: [toolCall] },
+ * ])
+ * ```
+ */
+export function convertSupportedMessagesToLiquidMessages(messages: SupportedMessage[]): Message[] {
+    if (!isArr(messages)) {
         throw new TypeError(`Expected an array of message objects. Got ${JSON.stringify(messages)}`)
     }
-    return messages.map((msg) => {
-        if (isToolCallsMessage(msg)) {
-            return toolCallsMessageToPython(msg)
+
+    return messages.map(convertSupportedMessageToLiquidMessage)
+}
+
+/**
+ * Converts a Liquid model message back into a supported message.
+ * Assistant tool call payloads are parsed into ToolCallsMessage objects, while leaked tool-call
+ * tokens in normal assistant text are stripped.
+ *
+ * @param message A plain Message produced by the model.
+ * @returns The corresponding supported message.
+ *
+ * @example
+ * ```ts
+ * convertLiquidMessageToSupportedMessage({
+ *   role: 'assistant',
+ *   content: '<|tool_call_start|>[get_time()]<|tool_call_end|>',
+ * })
+ * ```
+ */
+export function convertLiquidMessageToSupportedMessage(message: Message): SupportedMessage {
+    if (!isMessage(message)) {
+        throw new TypeError(`Expected a Message object. Got ${JSON.stringify(message)}`)
+    }
+
+    switch (message.role) {
+        case 'system':
+            return createSystemMessage(message.content)
+        case 'user':
+            return createUserMessage(message.content)
+        case 'assistant': {
+            let toolCallsMessage: ToolCallsMessage | null = null
+            const strippedContent = stripToolCallTokens(message.content).trim()
+
+            try {
+                toolCallsMessage = tryParseToolCalls(message.content)
+            } catch {
+                toolCallsMessage = null
+            }
+
+            if (toolCallsMessage === null && strippedContent.startsWith('[') && strippedContent.endsWith(']')) {
+                try {
+                    toolCallsMessage = {
+                        role: 'assistant',
+                        tool_calls: parsePythonToolCallObj(strippedContent),
+                    }
+                } catch {
+                    toolCallsMessage = null
+                }
+            }
+
+            return toolCallsMessage ?? createAssistantMessage(strippedContent)
         }
-        return msg
-    })
+        case 'tool':
+            if ('tool_call_id' in message && isStr(message.tool_call_id)) {
+                return createToolResultMessage(message.tool_call_id, message.content)
+            }
+            throw new TypeError(`Expected tool messages to include tool_call_id. Got ${JSON.stringify(message)}`)
+        default:
+            throw new TypeError(`Unsupported message role: ${JSON.stringify(message)}`)
+    }
+}
+
+/**
+ * Converts an array of Liquid model messages back into supported messages.
+ *
+ * @param messages A plain Message array.
+ * @returns The corresponding supported message array.
+ *
+ * @example
+ * ```ts
+ * convertLiquidMessagesToSupportedMessages([{ role: 'user', content: 'Hi' }])
+ * ```
+ */
+export function convertLiquidMessagesToSupportedMessages(messages: Message[]): SupportedMessage[] {
+    if (!isArr(messages) || !messages.every(isMessage)) {
+        throw new TypeError(`Expected an array of Message objects. Got ${JSON.stringify(messages)}`)
+    }
+
+    return messages.map(convertLiquidMessageToSupportedMessage)
 }
