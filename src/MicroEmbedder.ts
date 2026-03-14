@@ -36,4 +36,12 @@ export class MicroEmbedder {
 
         return Array.from(output.data)
     }
+
+    async load(): Promise<void> {
+        await this.#pipelineFactory.getPipeline()
+    }
+
+    async unload(): Promise<void> {
+        await this.#pipelineFactory.unload()
+    }
 }
