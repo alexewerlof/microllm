@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "test": "node --import tsx --test",
-    "node-chat": "tsx ./src/node-chat.ts"
+    "node-chat": "tsx ./src/node-chat.ts",
+    "node-agentic-loop": "tsx ./src/node-agentic-loop.ts"
   },
   "keywords": [],
   "author": "",

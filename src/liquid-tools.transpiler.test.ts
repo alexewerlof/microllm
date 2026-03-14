@@ -1,6 +1,14 @@
 import { describe, test } from 'node:test'
 import assert from 'node:assert/strict'
-import { parsePythonToolCallObj, stripToolCallTokens, toolCallObjArgumentsToStr, tryParseToolCalls } from './liquid-tools-transpiler'
+import { Message } from '@huggingface/transformers'
+import {
+    convertLiquidMessageToSupportedMessage,
+    convertSupportedMessagesToLiquidMessages,
+    parsePythonToolCallObj,
+    stripToolCallTokens,
+    toolCallObjArgumentsToStr,
+    tryParseToolCalls,
+} from './liquid-tools-transpiler'
 
 describe(stripToolCallTokens.name, () => {
     test('removes the special tokens', () => {
@@ -152,5 +160,53 @@ describe(tryParseToolCalls.name, () => {
             () => tryParseToolCalls(123),
             TypeError,
         )
+    })
+})
+
+describe(convertSupportedMessagesToLiquidMessages.name, () => {
+    test('converts tool call messages into python-style assistant content', () => {
+        const result = convertSupportedMessagesToLiquidMessages([
+            {
+                role: 'assistant',
+                tool_calls: [
+                    { id: 'call_123', type: 'function', function: { name: 'get_time', arguments: '{}' } },
+                ],
+            },
+        ])
+
+        assert.deepStrictEqual(result, [{ role: 'assistant', content: '<|tool_call_start|>[get_time()]<|tool_call_end|>' }])
+    })
+})
+
+describe(convertLiquidMessageToSupportedMessage.name, () => {
+    test('converts a liquid tool-call assistant message into a tool_calls message', () => {
+        const result = convertLiquidMessageToSupportedMessage({
+            role: 'assistant',
+            content: '<|tool_call_start|>[get_time()]<|tool_call_end|>',
+        } as Message)
+
+        assert.strictEqual(result.role, 'assistant')
+        assert.ok('tool_calls' in result)
+        assert.strictEqual(result.tool_calls[0].function.name, 'get_time')
+    })
+
+    test('converts a plain bracketed tool call into a tool_calls message', () => {
+        const result = convertLiquidMessageToSupportedMessage({
+            role: 'assistant',
+            content: '[get_time()]',
+        } as Message)
+
+        assert.strictEqual(result.role, 'assistant')
+        assert.ok('tool_calls' in result)
+        assert.strictEqual(result.tool_calls[0].function.name, 'get_time')
+    })
+
+    test('strips leaked tool call tokens from regular assistant content', () => {
+        const result = convertLiquidMessageToSupportedMessage({
+            role: 'assistant',
+            content: '<|tool_call_start|>It is noon.<|tool_call_end|>',
+        } as Message)
+
+        assert.deepStrictEqual(result, { role: 'assistant', content: 'It is noon.' })
     })
 })

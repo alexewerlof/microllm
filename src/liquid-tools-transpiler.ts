@@ -170,15 +170,30 @@ export function toolCallsMessageToPython(toolCallsMessage: ToolCallsMessage): As
     const content = toolCallsMessage.tool_calls
         .filter(isToolCallObj)
         .map((toolCallObj) => {
-            return `[${toolCallObj.function.name}(${toolCallObjArgumentsToStr(toolCallObj.function.arguments)})]`
+            return `${toolCallObj.function.name}(${toolCallObjArgumentsToStr(toolCallObj.function.arguments)})`
         })
-        .join('')
-    return createAssistantMessage(content)
+        .join(',')
+    return createAssistantMessage(`${TOOL_CALL_START_TOKEN}[${content}]${TOOL_CALL_END_TOKEN}`)
 }
 
 /**
- * Converts a single supported message into the plain Message format expected by Liquid models.
- * Tool call assistant messages are rendered into the Python-style syntax used by the tokenizer.
+ * Converts one internal SupportedMessage into the plain Message format expected by Liquid models.
+ *
+ * Why this function exists:
+ * The Liquid chat template renders assistant turns from `message.content` only.
+ * It can inject tool list tokens (`<|tool_list_start|>...<|tool_list_end|>`) and wrap
+ * tool role responses (`<|tool_response_start|>...<|tool_response_end|>`), but it does not
+ * convert OpenAI-style `assistant.tool_calls` objects into
+ * `<|tool_call_start|>[fn(args)]<|tool_call_end|>`.
+ *
+ * This adapter is therefore required to preserve stable tool-calling behavior across turns.
+ * For assistant tool calls, it serializes `tool_calls` into the canonical Liquid text pattern
+ * so the model sees the same format in history that it is expected to produce.
+ *
+ * When to use:
+ * - Before `tokenizer.apply_chat_template(...)` whenever messages may include assistant tool calls.
+ * - Keep this conversion even if a chat template is present, unless that template explicitly
+ *   consumes `message.tool_calls` and emits tool-call tokens itself.
  *
  * @param message A supported message.
  * @returns A plain Message instance compatible with the Liquid chat template.
@@ -186,7 +201,7 @@ export function toolCallsMessageToPython(toolCallsMessage: ToolCallsMessage): As
  * @example
  * ```ts
  * convertSupportedMessageToLiquidMessage({ role: 'assistant', tool_calls: [toolCall] })
- * // => { role: 'assistant', content: '[fn()]' }
+ * // => { role: 'assistant', content: '<|tool_call_start|>[fn()]<|tool_call_end|>' }
  * ```
  */
 export function convertSupportedMessageToLiquidMessage(message: SupportedMessage): Message {
@@ -248,17 +263,19 @@ export function convertLiquidMessageToSupportedMessage(message: Message): Suppor
         throw new TypeError(`Expected a Message object. Got ${JSON.stringify(message)}`)
     }
 
-    switch (message.role) {
+    const { role, content } = message
+
+    switch (role) {
         case 'system':
-            return createSystemMessage(message.content)
+            return createSystemMessage(content)
         case 'user':
-            return createUserMessage(message.content)
+            return createUserMessage(content)
         case 'assistant': {
             let toolCallsMessage: ToolCallsMessage | null = null
-            const strippedContent = stripToolCallTokens(message.content).trim()
+            const strippedContent = stripToolCallTokens(content).trim()
 
             try {
-                toolCallsMessage = tryParseToolCalls(message.content)
+                toolCallsMessage = tryParseToolCalls(content)
             } catch {
                 toolCallsMessage = null
             }
@@ -278,7 +295,7 @@ export function convertLiquidMessageToSupportedMessage(message: Message): Suppor
         }
         case 'tool':
             if ('tool_call_id' in message && isStr(message.tool_call_id)) {
-                return createToolResultMessage(message.tool_call_id, message.content)
+                return createToolResultMessage(message.tool_call_id, content)
             }
             throw new TypeError(`Expected tool messages to include tool_call_id. Got ${JSON.stringify(message)}`)
         default:

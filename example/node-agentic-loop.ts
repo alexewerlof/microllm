@@ -6,10 +6,10 @@ import { isAssistantMessage } from "../src/Message/guards"
 import { createUserMessage } from "../src/Message/factories"
 
 function getRandom() {
-    return Math.floor(Math.random() * 10)
+    return Math.floor(Math.random() * 5)
 }
 
-getRandom.description = 'Returns a random integer between 0 and 9.'
+getRandom.description = 'Returns a random integer between 0 and 4.'
 
 async function main() {
     const llm = new MicroLLM('onnx-community/LFM2-1.2B-Tool-ONNX', {
@@ -19,19 +19,16 @@ async function main() {
         {
             role: 'system',
             content: [
-                `Use the provided "${getRandom.name}" function to generate a random integer between 0 and 9.`,
+                `Use the provided "${getRandom.name}" function to generate a random integer between 0 and 4.`,
                 `You should follow this process:`,
                 `1. Call the function`,
-                `2. Then do the following based on the result:`,
-                `2.1. If the result is less than 5, your response should be RESULT < 5. Call the function again.`,
-                `2.2. If the result is greater than 5, your response should be RESULT > 5. Call the function again.`,
-                `2.3. If the result is exactly 5, your response should be RESULT = 5.`,
+                `2. If the result is equal to 0, just return STOP otherwise just return the result.`,
             ].join('\n')
         },
         {
             role: 'user',
             content: [
-                `Let me know when you get 5.`
+                `Let me know when you get 3.`
             ].join(' ')
         }
     ]

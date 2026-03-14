@@ -1,13 +1,12 @@
-import { Message, PretrainedModelOptions, StoppingCriteriaList, TextGenerationConfig, TextStreamer } from "@huggingface/transformers"
+import { Message, PretrainedModelOptions, StoppingCriteriaList, Tensor, TextGenerationConfig, TextStreamer } from "@huggingface/transformers"
 import { TransformersPipelineFactory } from "./TransformersPipelineFactory"
-import { hasProp, isA, isArr, isDef, isFn, isObj, isPOJO } from "jty"
+import { hasProp, isA, isArr, isDef, isFn, isObj, isPOJO, isStr } from "jty"
 import { normalizeMessageArray } from "./normalization"
 import { SignalStoppingCriteria } from "./SignalStoppingCriteria"
 import { Tools } from "./Tools"
 import { SupportedMessage } from "./Message/types"
-import { createSystemMessage } from "./Message/factories"
-import { isSystemMessage } from "./Message/guards"
-import { convertLiquidMessageToSupportedMessage, convertSupportedMessagesToLiquidMessages } from "./liquid-tools-transpiler"
+import { createAssistantMessage } from "./Message/factories"
+import { convertSupportedMessagesToLiquidMessages, tryParseToolCalls } from "./liquid-tools-transpiler"
 
 const defaultTextGenerationConfig: Partial<TextGenerationConfig> = {
     max_new_tokens: 512,
@@ -28,37 +27,6 @@ export interface MicroLLMCompleteParams {
     onToken?: (token: string) => unknown
 }
 
-interface ToolCapablePipeline {
-    tokenizer: {
-        apply_chat_template: (...args: any[]) => any
-        batch_decode: (...args: any[]) => string[]
-    }
-    model: {
-        generate: (args: Record<string, unknown>) => Promise<unknown>
-    }
-}
-
-/**
- * Adds the tool declarations as a synthetic system message for fallback pipelines
- * that do not expose native tool-aware chat templating.
- *
- * @param messages The supported conversation messages.
- * @param tools The available tool declarations.
- * @returns A cloned message array with the tool declaration message inserted.
- *
- * @example
- * ```ts
- * const prepared = injectToolDeclarations(messages, tools)
- * ```
- */
-function injectToolDeclarations(messages: SupportedMessage[], tools: Tools): SupportedMessage[] {
-    const supportedMessages = [...messages]
-    const toolDeclarationsMessage = createSystemMessage('List of tools: ' + JSON.stringify(tools.toJSON()))
-    const lastSystemIndex = supportedMessages.findLastIndex(isSystemMessage)
-    supportedMessages.splice(lastSystemIndex + 1, 0, toolDeclarationsMessage)
-    return supportedMessages
-}
-
 /**
  * Extracts the assistant continuation text from a decoded full-sequence generation.
  *
@@ -72,11 +40,65 @@ function injectToolDeclarations(messages: SupportedMessage[], tools: Tools): Sup
  * ```
  */
 function extractAssistantText(fullTexts: string[], promptTexts: string[]): string {
-    if (!isArr(fullTexts) || !isArr(promptTexts) || typeof fullTexts[0] !== 'string' || typeof promptTexts[0] !== 'string') {
+    if (!isArr(fullTexts) || !isArr(promptTexts) || !isStr(fullTexts[0]) || !isStr(promptTexts[0])) {
         throw new TypeError('Expected decoded prompt and output text arrays from tokenizer.batch_decode().')
     }
 
     return fullTexts[0].slice(promptTexts[0].length).trim()
+}
+
+/**
+ * Decodes tokenized model output and prompt, then extracts the assistant continuation.
+ *
+ * @param tokenizer The tokenizer instance with batch_decode support.
+ * @param outputTokenIds The full output token IDs from model.generate().
+ * @param promptInputIds The prompt token IDs from apply_chat_template().
+ * @param skipSpecialTokens Whether to strip special tokens during decoding.
+ * @returns The assistant continuation text.
+ *
+ * @example
+ * ```ts
+ * const text = decodeAssistantText(tokenizer, outputIds, promptIds, true)
+ * ```
+ */
+function decodeAssistantText(
+    tokenizer: { batch_decode: (batch: Tensor, decode_args?: Record<string, unknown>) => string[] },
+    outputTokenIds: Tensor,
+    promptInputIds: Tensor,
+    skipSpecialTokens: boolean,
+): string {
+    const decodeArgs = skipSpecialTokens ? { skip_special_tokens: true } : {}
+    const decodedOutputs = tokenizer.batch_decode(outputTokenIds, decodeArgs)
+    const decodedPrompts = tokenizer.batch_decode(promptInputIds, decodeArgs)
+    return extractAssistantText(decodedOutputs, decodedPrompts)
+}
+
+/**
+ * Decodes the prompt input IDs into the exact plain-text sequence sent to generation.
+ *
+ * @param tokenizer The tokenizer instance with batch_decode support.
+ * @param promptInputIds The prompt token IDs from apply_chat_template().
+ * @param skipSpecialTokens Whether to strip special tokens during decoding.
+ * @returns The decoded prompt text.
+ *
+ * @example
+ * ```ts
+ * const prompt = decodePromptText(tokenizer, inputIds, false)
+ * ```
+ */
+function decodePromptText(
+    tokenizer: { batch_decode: (batch: Tensor, decode_args?: Record<string, unknown>) => string[] },
+    promptInputIds: Tensor,
+    skipSpecialTokens: boolean,
+): string {
+    const decodeArgs = skipSpecialTokens ? { skip_special_tokens: true } : {}
+    const decodedPrompts = tokenizer.batch_decode(promptInputIds, decodeArgs)
+
+    if (!isArr(decodedPrompts) || !isStr(decodedPrompts[0])) {
+        throw new TypeError('Expected decoded prompt text array from tokenizer.batch_decode().')
+    }
+
+    return decodedPrompts[0]
 }
 
 export class MicroLLM {
@@ -163,22 +185,45 @@ export class MicroLLM {
             add_generation_prompt: true,
             return_dict: true,
         }) as Record<string, unknown>
+
+        const promptTextWithSpecialTokens = decodePromptText(
+            pipelineInstance.tokenizer,
+            inputs.input_ids as Tensor,
+            false,
+        )
+
+        console.dir({
+            promptTextWithSpecialTokens,
+            inputs,
+        }, { depth: 3 })
+
         const outputTokenIds = await pipelineInstance.model.generate({
             ...inputs,
             ...streamerConfig,
             ...stoppingCriteriaConfig,
             ...textGenerationConfig,
         })
-        const decodedOutputs = pipelineInstance.tokenizer.batch_decode(outputTokenIds as any, {
-            skip_special_tokens: true,
-        })
-        const decodedPrompts = pipelineInstance.tokenizer.batch_decode(inputs.input_ids as any, {
-            skip_special_tokens: true,
-        })
 
-        return convertLiquidMessageToSupportedMessage({
-            role: 'assistant',
-            content: extractAssistantText(decodedOutputs, decodedPrompts),
-        })
+        // First pass: decode preserving special tokens to detect tool calls
+        const rawAssistantText = decodeAssistantText(
+            pipelineInstance.tokenizer, outputTokenIds as Tensor, inputs.input_ids as Tensor, false
+        )
+
+        try {
+            const toolCallsMessage = tryParseToolCalls(rawAssistantText)
+            if (toolCallsMessage) {
+                return toolCallsMessage
+            }
+        } catch {
+            // Malformed tool call tokens from model output — treat as plain text
+        }
+
+
+        // Second pass: decode stripping special tokens for clean text
+        const cleanAssistantText = decodeAssistantText(
+            pipelineInstance.tokenizer, outputTokenIds as Tensor, inputs.input_ids as Tensor, true
+        )
+
+        return createAssistantMessage(cleanAssistantText)
     }
 }
