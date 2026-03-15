@@ -1,11 +1,11 @@
 import { isA, isArr } from 'jty'
 import { Tools } from './Tools'
-import { MicroLLM } from './MicroLLM'
+import { MicroChat } from './MicroChat'
 import { SupportedMessage } from './Message/types'
 import { isAssistantMessage, isToolCallsMessage } from './Message/guards'
 
 /**
- * Orchestrates the agentic loop between a MicroLLM and a set of Tools.
+ * Orchestrates the agentic loop between a MicroChat and a set of Tools.
  * Sends messages to the LLM, detects tool call requests, executes them,
  * and repeats until the LLM produces a final text answer.
  *
@@ -26,32 +26,32 @@ export class MicroAgent {
     /** Maximum number of consecutive tool calls before throwing. */
     static MAX_TOOL_CALLS = 10
 
-    #llm: MicroLLM
+    #microChat: MicroChat
 
     /**
-     * @param llm The MicroLLM instance used for generating responses.
-     * @throws {TypeError} If llm is not an instance of MicroLLM.
+     * @param microChat The MicroChat instance used for generating responses.
+     * @throws {TypeError} If microChat is not an instance of MicroChat.
      */
-    constructor(llm: MicroLLM) {
-        if (!isA(llm, MicroLLM)) {
-            throw new TypeError(`Expected llm to be an instance of MicroLLM. Got ${llm} (${typeof llm})`)
+    constructor(microChat: MicroChat) {
+        if (!isA(microChat, MicroChat)) {
+            throw new TypeError(`Expected microChat to be an instance of MicroChat. Got ${microChat} (${typeof microChat})`)
         }
-        this.#llm = llm
+        this.#microChat = microChat
     }
 
     /**
-     * Gets the LLM instance.
+     * Gets the MicroChat instance.
      */
-    get llm(): MicroLLM {
-        return this.#llm
+    get microChat(): MicroChat {
+        return this.#microChat
     }
 
     /**
      * Runs the agentic tool-calling loop.
      *
-     * Injects tool declarations as a system message, calls the LLM, and if the response
+     * Injects tool declarations as a system message, calls the MicroChat, and if the response
      * contains a tool call, executes it and feeds the result back. Repeats until
-     * the LLM produces a final text answer or MAX_CONSECUTIVE_TOOL_CALLS is reached.
+     * the MicroChat produces a final text answer or MAX_CONSECUTIVE_TOOL_CALLS is reached.
      *
      * All tool call and result messages are returned as a new array.
      *
@@ -78,7 +78,7 @@ export class MicroAgent {
         const ret: SupportedMessage[] = []
         for (let iteration = 0; iteration < MicroAgent.MAX_TOOL_CALLS; iteration++) {
             console.log('::::Current messages:', messages)
-            const result = await this.#llm.complete({
+            const result = await this.#microChat.complete({
                 messages: [...messages, ...ret],
                 tools,
             })

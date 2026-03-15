@@ -14,7 +14,7 @@ const defaultTextGenerationConfig: Partial<TextGenerationConfig> = {
     top_p: 0.5,
 }
 
-export interface MicroLLMCompleteParams {
+export interface MicroChatCompleteParams {
     /** The conversation messages. */
     messages: SupportedMessage[]
     /** Optional text generation config. */
@@ -101,7 +101,7 @@ function decodePromptText(
     return decodedPrompts[0]
 }
 
-export class MicroLLM {
+export class MicroChat {
     transformersPipelineFactory: TransformersPipelineFactory<"text-generation">
     
     constructor(modelId: string, pipelineOptions: PretrainedModelOptions = {}) {
@@ -125,7 +125,7 @@ export class MicroLLM {
      * const text = await llm.complete({ messages, tools })
      * ```
      */
-    async complete(params: MicroLLMCompleteParams): Promise<SupportedMessage> {
+    async complete(params: MicroChatCompleteParams): Promise<SupportedMessage> {
         if (!isObj(params)) {
             throw new TypeError(`Expected object for params, but got ${params} (${typeof params})`)
         }

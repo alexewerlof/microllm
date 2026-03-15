@@ -1,4 +1,4 @@
-import { MicroLLM } from "../src/MicroLLM"
+import { MicroChat } from "../src/MicroChat"
 import { SupportedMessage } from "../src/Message/types"
 import { Tools } from "../src/Tools"
 import { MicroAgent } from "../src/MicroAgent"
@@ -12,7 +12,7 @@ function getRandom() {
 getRandom.description = 'Returns a random integer between 0 and 4.'
 
 async function main() {
-    const llm = new MicroLLM('onnx-community/LFM2-1.2B-Tool-ONNX', {
+    const llm = new MicroChat('onnx-community/LFM2-1.2B-Tool-ONNX', {
         dtype: 'q4',
     })
     const messages: SupportedMessage[] = [

@@ -1,12 +1,12 @@
 import assert from 'node:assert/strict'
 import { describe, test } from 'node:test'
-import { MicroLLM } from './MicroLLM'
+import { MicroChat } from './MicroChat'
 import { SupportedMessage } from './Message/types'
 import { Tools } from './Tools'
 
-describe('MicroLLM', () => {
+describe('MicroChat', () => {
     test('uses tokenizer chat templating with tools when native support is available', async () => {
-        const llm = new MicroLLM('test-model')
+        const llm = new MicroChat('test-model')
         const tools = new Tools()
         tools.addTool('get_time', 'Get the current time').func = async () => 'noon'
 
@@ -63,7 +63,7 @@ describe('MicroLLM', () => {
     })
 
     test('logs the decoded prompt text with special tokens before generation', async () => {
-        const llm = new MicroLLM('test-model')
+        const llm = new MicroChat('test-model')
 
         const messages: SupportedMessage[] = [
             { role: 'user', content: 'What time is it?' },

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { describe, test } from 'node:test'
-import { MicroLLM } from './MicroLLM'
+import { MicroChat } from './MicroChat'
 import { MicroAgent } from './MicroAgent'
 import { Tools } from './Tools'
 import { SupportedMessage } from './Message/types'
@@ -44,16 +44,16 @@ function createMockPipeline(responses: string[]) {
 }
 
 /**
- * Wires a MicroLLM instance to use a mock pipeline with the given canned responses.
+ * Wires a MicroChat instance to use a mock pipeline with the given canned responses.
  */
-function stubLLM(llm: MicroLLM, responses: string[]) {
+function stubLLM(llm: MicroChat, responses: string[]) {
     const pipeline = createMockPipeline(responses)
     llm.transformersPipelineFactory.getPipeline = async () => pipeline as any
 }
 
 describe('MicroAgent', () => {
     test('executes a model-requested tool and returns the follow-up answer', async () => {
-        const llm = new MicroLLM('test-model')
+        const llm = new MicroChat('test-model')
         stubLLM(llm, ['<|tool_call_start|>[get_time()]<|tool_call_end|>', 'It is noon.'])
 
         let invoked = false
@@ -74,7 +74,7 @@ describe('MicroAgent', () => {
     })
 
     test('returns text answer when response has no tool call tokens', async () => {
-        const llm = new MicroLLM('test-model')
+        const llm = new MicroChat('test-model')
         stubLLM(llm, ['get_time()'])
 
         let invoked = false
@@ -94,7 +94,7 @@ describe('MicroAgent', () => {
     })
 
     test('returns completion text when no tool calls are present', async () => {
-        const llm = new MicroLLM('test-model')
+        const llm = new MicroChat('test-model')
         stubLLM(llm, ['final answer'])
 
         const tools = new Tools()
@@ -107,7 +107,7 @@ describe('MicroAgent', () => {
     })
 
     test('strips tool call tokens from non-tool-call responses', async () => {
-        const llm = new MicroLLM('test-model')
+        const llm = new MicroChat('test-model')
         stubLLM(llm, ['<|tool_call_start|>It is noon.<|tool_call_end|>'])
 
         const tools = new Tools()
@@ -120,7 +120,7 @@ describe('MicroAgent', () => {
     })
 
     test('converts existing tool call messages to Python format before calling the pipeline', async () => {
-        const llm = new MicroLLM('test-model')
+        const llm = new MicroChat('test-model')
         let capturedMessages: Message[] | undefined
 
         llm.transformersPipelineFactory.getPipeline = async () => ({
@@ -165,7 +165,7 @@ describe('MicroAgent', () => {
     })
 
     test('returns new array with generated messages', async () => {
-        const llm = new MicroLLM('test-model')
+        const llm = new MicroChat('test-model')
         stubLLM(llm, ['hello'])
 
         const tools = new Tools()
@@ -179,7 +179,7 @@ describe('MicroAgent', () => {
     })
 
     test('throws when maximum consecutive tool calls is exceeded', async () => {
-        const llm = new MicroLLM('test-model')
+        const llm = new MicroChat('test-model')
         // Always return a tool call — should eventually exceed the limit
         const toolCallResponse = '<|tool_call_start|>[get_time()]<|tool_call_end|>'
         stubLLM(llm, Array(MicroAgent.MAX_TOOL_CALLS + 1).fill(toolCallResponse))
