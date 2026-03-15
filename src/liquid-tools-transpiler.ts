@@ -120,13 +120,13 @@ export function tryParseToolCalls(text: string): ToolCallsMessage | null {
     const startIdx = text.indexOf(TOOL_CALL_START_TOKEN)
     if (startIdx === -1) return null
 
-    const afterStart = startIdx + TOOL_CALL_START_TOKEN.length
-    const endIdx = text.indexOf(TOOL_CALL_END_TOKEN, afterStart)
+    const afterStartIdx = startIdx + TOOL_CALL_START_TOKEN.length
+    const endIdx = text.indexOf(TOOL_CALL_END_TOKEN, afterStartIdx)
     if (endIdx === -1) {
         throw new SyntaxError(`Found ${TOOL_CALL_START_TOKEN} but missing ${TOOL_CALL_END_TOKEN} in ${text}`)
     }
 
-    const inner = text.substring(afterStart, endIdx).trim()
+    const inner = text.substring(afterStartIdx, endIdx).trim()
 
     if (!inner.startsWith('[') || !inner.endsWith(']')) {
         throw new SyntaxError(`Expected tool call to be wrapped in brackets, but got: ${inner} in ${text}`)
