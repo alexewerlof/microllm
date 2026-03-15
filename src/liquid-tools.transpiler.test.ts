@@ -2,11 +2,9 @@ import { describe, test } from 'node:test'
 import assert from 'node:assert/strict'
 import { Message } from '@huggingface/transformers'
 import {
-    convertLiquidMessageToSupportedMessage,
     convertSupportedMessagesToLiquidMessages,
     parsePythonToolCallObj,
     stripToolCallTokens,
-    toolCallObjArgumentsToStr,
     tryParseToolCalls,
 } from './liquid-tools-transpiler'
 
@@ -77,40 +75,6 @@ describe(parsePythonToolCallObj.name, () => {
     })
 })
 
-describe(toolCallObjArgumentsToStr.name, () => {
-    test('converts string arguments to quoted format', () => {
-        assert.strictEqual(toolCallObjArgumentsToStr('{"arg1":"hello"}'), 'arg1="hello"')
-        const valueWithQuotes = 'he"llo'
-        assert.strictEqual(toolCallObjArgumentsToStr(JSON.stringify({ arg1: valueWithQuotes })), 'arg1="he\\"llo"')
-
-    })
-
-    test('converts number arguments', () => {
-        assert.strictEqual(toolCallObjArgumentsToStr('{"arg1":42}'), 'arg1=42')
-    })
-
-    test('converts booleans to Python format', () => {
-        assert.strictEqual(toolCallObjArgumentsToStr('{"arg1":true}'), 'arg1=True')
-        assert.strictEqual(toolCallObjArgumentsToStr('{"arg1":false}'), 'arg1=False')
-    })
-
-    test('converts null to Python None', () => {
-        assert.strictEqual(toolCallObjArgumentsToStr('{"arg1":null}'), 'arg1=None')
-    })
-
-    test('converts multiple arguments', () => {
-        assert.strictEqual(
-            toolCallObjArgumentsToStr('{"name":"alice","age":30,"active":true}'),
-            'name="alice", age=30, active=True',
-        )
-    })
-
-    test('returns empty string for undefined input', () => {
-        assert.strictEqual(toolCallObjArgumentsToStr(undefined), '')
-        assert.strictEqual(toolCallObjArgumentsToStr(''), '')
-    })
-})
-
 describe(tryParseToolCalls.name, () => {
     test('parses a tool call wrapped in special tokens', () => {
         const result = tryParseToolCalls('<|tool_call_start|>[get_time()]<|tool_call_end|>')
@@ -175,38 +139,5 @@ describe(convertSupportedMessagesToLiquidMessages.name, () => {
         ])
 
         assert.deepStrictEqual(result, [{ role: 'assistant', content: '<|tool_call_start|>[get_time()]<|tool_call_end|>' }])
-    })
-})
-
-describe(convertLiquidMessageToSupportedMessage.name, () => {
-    test('converts a liquid tool-call assistant message into a tool_calls message', () => {
-        const result = convertLiquidMessageToSupportedMessage({
-            role: 'assistant',
-            content: '<|tool_call_start|>[get_time()]<|tool_call_end|>',
-        } as Message)
-
-        assert.strictEqual(result.role, 'assistant')
-        assert.ok('tool_calls' in result)
-        assert.strictEqual(result.tool_calls[0].function.name, 'get_time')
-    })
-
-    test('converts a plain bracketed tool call into a tool_calls message', () => {
-        const result = convertLiquidMessageToSupportedMessage({
-            role: 'assistant',
-            content: '[get_time()]',
-        } as Message)
-
-        assert.strictEqual(result.role, 'assistant')
-        assert.ok('tool_calls' in result)
-        assert.strictEqual(result.tool_calls[0].function.name, 'get_time')
-    })
-
-    test('strips leaked tool call tokens from regular assistant content', () => {
-        const result = convertLiquidMessageToSupportedMessage({
-            role: 'assistant',
-            content: '<|tool_call_start|>It is noon.<|tool_call_end|>',
-        } as Message)
-
-        assert.deepStrictEqual(result, { role: 'assistant', content: 'It is noon.' })
     })
 })

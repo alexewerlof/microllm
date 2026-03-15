@@ -86,17 +86,6 @@ export function parsePythonToolCallObj(text: string): ToolCallObj[] {
     ]
 }
 
-export function parsePythonToToolCallsMessage(message: AssistantMessage): ToolCallsMessage {
-    if (!isAssistantMessage(message)) {
-        throw new Error(`Expected an assistant message but got ${JSON.stringify(message)} (${typeof message})`)
-    }
-    const toolCallObjs = parsePythonToolCallObj(message.content)
-    return {
-        role: 'assistant',
-        tool_calls: toolCallObjs,
-    }
-}
-
 /**
  * Parses an LFM2 assistant response containing Pythonic tool call tokens into a ToolCallsMessage.
  * Expects the text to contain `<|tool_call_start|>[fn(args)]<|tool_call_end|>` markers.
@@ -158,7 +147,7 @@ function toolCallObjArgumentValueToPython(value: unknown): string {
     }
 }
 
-export function toolCallObjArgumentsToStr(argStr?: string): string {
+function toolCallObjArgumentsToStr(argStr?: string): string {
     if (!argStr) return ''
     const parsedArgs = JSON.parse(argStr)
     return Object.entries(parsedArgs)
@@ -166,7 +155,7 @@ export function toolCallObjArgumentsToStr(argStr?: string): string {
         .join(', ')
 }
 
-export function toolCallsMessageToPython(toolCallsMessage: ToolCallsMessage): AssistantMessage {
+function toolCallsMessageToPython(toolCallsMessage: ToolCallsMessage): AssistantMessage {
     const content = toolCallsMessage.tool_calls
         .filter(isToolCallObj)
         .map((toolCallObj) => {
@@ -240,84 +229,4 @@ export function convertSupportedMessagesToLiquidMessages(messages: SupportedMess
     }
 
     return messages.map(convertSupportedMessageToLiquidMessage)
-}
-
-/**
- * Converts a Liquid model message back into a supported message.
- * Assistant tool call payloads are parsed into ToolCallsMessage objects, while leaked tool-call
- * tokens in normal assistant text are stripped.
- *
- * @param message A plain Message produced by the model.
- * @returns The corresponding supported message.
- *
- * @example
- * ```ts
- * convertLiquidMessageToSupportedMessage({
- *   role: 'assistant',
- *   content: '<|tool_call_start|>[get_time()]<|tool_call_end|>',
- * })
- * ```
- */
-export function convertLiquidMessageToSupportedMessage(message: Message): SupportedMessage {
-    if (!isMessage(message)) {
-        throw new TypeError(`Expected a Message object. Got ${JSON.stringify(message)}`)
-    }
-
-    const { role, content } = message
-
-    switch (role) {
-        case 'system':
-            return createSystemMessage(content)
-        case 'user':
-            return createUserMessage(content)
-        case 'assistant': {
-            let toolCallsMessage: ToolCallsMessage | null = null
-            const strippedContent = stripToolCallTokens(content).trim()
-
-            try {
-                toolCallsMessage = tryParseToolCalls(content)
-            } catch {
-                toolCallsMessage = null
-            }
-
-            if (toolCallsMessage === null && strippedContent.startsWith('[') && strippedContent.endsWith(']')) {
-                try {
-                    toolCallsMessage = {
-                        role: 'assistant',
-                        tool_calls: parsePythonToolCallObj(strippedContent),
-                    }
-                } catch {
-                    toolCallsMessage = null
-                }
-            }
-
-            return toolCallsMessage ?? createAssistantMessage(strippedContent)
-        }
-        case 'tool':
-            if ('tool_call_id' in message && isStr(message.tool_call_id)) {
-                return createToolResultMessage(message.tool_call_id, content)
-            }
-            throw new TypeError(`Expected tool messages to include tool_call_id. Got ${JSON.stringify(message)}`)
-        default:
-            throw new TypeError(`Unsupported message role: ${JSON.stringify(message)}`)
-    }
-}
-
-/**
- * Converts an array of Liquid model messages back into supported messages.
- *
- * @param messages A plain Message array.
- * @returns The corresponding supported message array.
- *
- * @example
- * ```ts
- * convertLiquidMessagesToSupportedMessages([{ role: 'user', content: 'Hi' }])
- * ```
- */
-export function convertLiquidMessagesToSupportedMessages(messages: Message[]): SupportedMessage[] {
-    if (!isArr(messages) || !messages.every(isMessage)) {
-        throw new TypeError(`Expected an array of Message objects. Got ${JSON.stringify(messages)}`)
-    }
-
-    return messages.map(convertLiquidMessageToSupportedMessage)
 }
