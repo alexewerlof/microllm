@@ -17,7 +17,7 @@ const defaultTextGenerationConfig: Partial<TextGenerationConfig> = {
 export interface MicroChatCompleteParams {
     /** The conversation messages. */
     messages: SupportedMessage[]
-    /** Optional text generation config. */
+    /** Optional text generation config like temperature, top_p, etc. */
     config?: Partial<TextGenerationConfig>
     /** Optional abort signal. */
     signal?: AbortSignal
