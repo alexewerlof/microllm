@@ -3,7 +3,7 @@ import { dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { MicroEmbedder } from '../src/MicroEmbedder'
 import { PipelineFactory } from '../src/PipelineFactory'
-import { chunkText } from '../src/RAG.js'
+import { chunkText } from '../src/MicroRAG.js'
 import { VectorStore } from '../src/VectorStore'
 
 const embedderPipelineFactory = new PipelineFactory('feature-extraction', 'Xenova/all-MiniLM-L6-v2', { dtype: 'q4' })

@@ -22,7 +22,7 @@ export function chunkText(text: string): string[] {
  * Works in both Node.js and browser environments.
  * Handles chunking, embedding, and context retrieval.
  */
-export class RAG {
+export class MicroRAG {
     #embedder: MicroEmbedder
     #vectorStore: VectorStore
 

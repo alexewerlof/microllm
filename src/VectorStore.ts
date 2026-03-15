@@ -1,4 +1,4 @@
-import { inRange, isArr, isInt, isPOJO } from 'jty'
+import { inRange, isArr, isArrLen, isInt, isPOJO } from 'jty'
 
 /**
  * Calculates cosine similarity between two vectors.
@@ -28,6 +28,8 @@ export function cosineSimilarity(v1: number[], v2: number[]): number {
  * Portable between Node.js and Browser.
  */
 export class VectorStore {
+    /** Minimum length of the embedding vectors. */
+    static MIN_EMBEDDING_LENGTH = 100
     /**
      * Length of the embedding vectors.
      * This value is initialized when the first document is added.
@@ -51,8 +53,8 @@ export class VectorStore {
         if (!isArr(embedding)) {
             throw new TypeError(`Expected embedding to be an array, got ${embedding} (${typeof embedding})`)
         }
-        if (embedding.length === 0) {
-            throw new RangeError(`Expected embedding to have at least one element, got ${embedding.length}`)
+        if (!isArrLen(embedding, VectorStore.MIN_EMBEDDING_LENGTH)) {
+            throw new RangeError(`Expected embedding to have at least ${VectorStore.MIN_EMBEDDING_LENGTH} elements, got ${(embedding as number[])?.length}`)
         }
         if (this.#documents.has(text)) {
             return false
@@ -85,8 +87,8 @@ export class VectorStore {
                 `Expected queryEmbedding to be an array, got ${queryEmbedding} (${typeof queryEmbedding})`,
             )
         }
-        if (queryEmbedding.length === 0) {
-            throw new RangeError(`Expected queryEmbedding to have at least one element, got ${queryEmbedding.length}`)
+        if (!isArrLen(queryEmbedding, VectorStore.MIN_EMBEDDING_LENGTH)) {
+            throw new RangeError(`Expected queryEmbedding to have at least ${VectorStore.MIN_EMBEDDING_LENGTH} elements, got ${(queryEmbedding as number[])?.length}`)
         }
         if (!inRange(minScore, 0, 1)) {
             throw new RangeError(`Expected minScore to be a number between 0 and 1, got ${minScore}`)
