@@ -1,12 +1,14 @@
 import { createUserMessage } from "../src/Message/factories"
 import { SupportedMessage } from "../src/Message/types"
 import { MicroChat } from "../src/MicroChat"
+import { TransformersPipelineFactory } from "../src/TransformersPipelineFactory"
 
 
 async function main() {
-    const llm = new MicroChat('onnx-community/LFM2-1.2B-Tool-ONNX', {
+    const pipelineFactory = new TransformersPipelineFactory('text-generation', 'onnx-community/LFM2-1.2B-Tool-ONNX', {
         dtype: 'q4',
     })
+    const llm = new MicroChat(pipelineFactory)
 
     const messages: SupportedMessage[] = [
         {

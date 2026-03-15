@@ -2,6 +2,7 @@ import { MicroChat } from "../src/MicroChat"
 import { SupportedMessage } from "../src/Message/types"
 import { Tools } from "../src/Tools"
 import { MicroAgent } from "../src/MicroAgent"
+import { TransformersPipelineFactory } from "../src/TransformersPipelineFactory"
 
 function getTime() {
     console.log('------- inside getTime() -------')
@@ -9,9 +10,10 @@ function getTime() {
 }
 
 async function main() {
-    const llm = new MicroChat('onnx-community/LFM2-1.2B-Tool-ONNX', {
+    const pipelineFactory = new TransformersPipelineFactory('text-generation', 'onnx-community/LFM2-1.2B-Tool-ONNX', {
         dtype: 'q4',
     })
+    const microChat = new MicroChat(pipelineFactory)
     const messages: SupportedMessage[] = [
         {
             role: 'system',
@@ -23,7 +25,7 @@ async function main() {
         }
     ]
 
-    const agent = new MicroAgent(llm)
+    const agent = new MicroAgent(microChat)
 
     
     const tools = new Tools()

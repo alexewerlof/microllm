@@ -1,4 +1,4 @@
-import { Message, PretrainedModelOptions, StoppingCriteriaList, Tensor, TextGenerationConfig, TextStreamer } from "@huggingface/transformers"
+import { Message, StoppingCriteriaList, Tensor, TextGenerationConfig, TextStreamer } from "@huggingface/transformers"
 import { TransformersPipelineFactory } from "./TransformersPipelineFactory"
 import { hasProp, isA, isArr, isDef, isFn, isObj, isPOJO, isStr } from "jty"
 import { normalizeMessageArray } from "./normalization"
@@ -103,9 +103,21 @@ function decodePromptText(
 
 export class MicroChat {
     transformersPipelineFactory: TransformersPipelineFactory<"text-generation">
-    
-    constructor(modelId: string, pipelineOptions: PretrainedModelOptions = {}) {
-        this.transformersPipelineFactory = new TransformersPipelineFactory('text-generation', modelId, pipelineOptions)
+
+    /**
+     * Creates a chat instance from a pre-configured text generation pipeline factory.
+     * The caller owns model lifecycle concerns such as eager loading and unloading.
+     *
+     * @param transformersPipelineFactory Factory that resolves the text generation pipeline.
+     *
+     * @example
+     * ```ts
+     * const factory = new TransformersPipelineFactory('text-generation', 'onnx-community/LFM2-1.2B-Tool-ONNX', { dtype: 'q4' })
+     * const llm = new MicroChat(factory)
+     * ```
+     */
+    constructor(transformersPipelineFactory: TransformersPipelineFactory<'text-generation'>) {
+        this.transformersPipelineFactory = transformersPipelineFactory
     }
 
     /**

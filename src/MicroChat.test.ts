@@ -1,12 +1,14 @@
 import assert from 'node:assert/strict'
 import { describe, test } from 'node:test'
 import { MicroChat } from './MicroChat'
+import { TransformersPipelineFactory } from './TransformersPipelineFactory'
 import { SupportedMessage } from './Message/types'
 import { Tools } from './Tools'
 
 describe('MicroChat', () => {
     test('uses tokenizer chat templating with tools when native support is available', async () => {
-        const llm = new MicroChat('test-model')
+        const factory = new TransformersPipelineFactory('text-generation', 'test-model')
+        const llm = new MicroChat(factory)
         const tools = new Tools()
         tools.addTool('get_time', 'Get the current time').func = async () => 'noon'
 
@@ -63,7 +65,8 @@ describe('MicroChat', () => {
     })
 
     test('logs the decoded prompt text with special tokens before generation', async () => {
-        const llm = new MicroChat('test-model')
+        const factory = new TransformersPipelineFactory('text-generation', 'test-model')
+        const llm = new MicroChat(factory)
 
         const messages: SupportedMessage[] = [
             { role: 'user', content: 'What time is it?' },

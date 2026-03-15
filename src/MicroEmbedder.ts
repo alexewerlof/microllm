@@ -2,24 +2,27 @@ import { FeatureExtractionPipelineOptions } from '@huggingface/transformers'
 import { TransformersPipelineFactory } from './TransformersPipelineFactory.js'
 
 /**
- * Manages the embedding model lifecycle and generates embeddings.
- * Wraps the Transformers.js feature-extraction pipeline with lazy initialization.
+ * Generates embeddings using a caller-owned feature-extraction pipeline factory.
  */
 export class MicroEmbedder {
-    #pipelineFactory: TransformersPipelineFactory<'feature-extraction'>
+    pipelineFactory: TransformersPipelineFactory<'feature-extraction'>
 
     /**
      * Creates a new Embedder instance.
-     * @param modelId - Hugging Face model ID for embeddings.
-     * @param pipelineOptions - Options passed directly to the Transformers.js pipeline (e.g. `{ dtype: "fp32" }`).
+     * @param pipelineFactory - Factory used to resolve the feature-extraction pipeline.
+     *
+     * @example
+     * ```ts
+     * const factory = new TransformersPipelineFactory('feature-extraction', 'Xenova/all-MiniLM-L6-v2')
+     * const embedder = new MicroEmbedder(factory)
+     * ```
      */
-    constructor(modelId: string, pipelineOptions: object = {}) {
-        this.#pipelineFactory = new TransformersPipelineFactory('feature-extraction', modelId, pipelineOptions)
+    constructor(pipelineFactory: TransformersPipelineFactory<'feature-extraction'>) {
+        this.pipelineFactory = pipelineFactory
     }
 
     /**
      * Generates an embedding vector for the given text.
-     * The pipeline must be initialized via `load()` before calling this method.
      * @param text - The input text to embed.
      * @returns The embedding vector.
      */
@@ -27,7 +30,7 @@ export class MicroEmbedder {
         pooling: 'mean',
             normalize: true,
     }): Promise<number[]> {
-        const pipelineInstance = await this.#pipelineFactory.getPipeline()
+        const pipelineInstance = await this.pipelineFactory.getPipeline()
         const snippet = text.slice(0, 15)
         const logMsg = `Embed ${snippet}... (${text.length} chars)`
         console.time(logMsg)
@@ -35,13 +38,5 @@ export class MicroEmbedder {
         console.timeEnd(logMsg)
 
         return Array.from(output.data)
-    }
-
-    async load(): Promise<void> {
-        await this.#pipelineFactory.getPipeline()
-    }
-
-    async unload(): Promise<void> {
-        await this.#pipelineFactory.unload()
     }
 }
