@@ -1,8 +1,8 @@
 import { MicroEmbedder } from "../src/MicroEmbedder";
-import { TransformersPipelineFactory } from "../src/TransformersPipelineFactory";
+import { PipelineFactory } from "../src/PipelineFactory";
 
 async function main() {
-    const pipelineFactory = new TransformersPipelineFactory('feature-extraction', 'Xenova/all-MiniLM-L6-v2')
+    const pipelineFactory = new PipelineFactory('feature-extraction', 'Xenova/all-MiniLM-L6-v2')
     const microEmbedder = new MicroEmbedder(pipelineFactory)
     const sentences = [
         "Hello, how are you?",

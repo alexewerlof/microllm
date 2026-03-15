@@ -2,7 +2,7 @@ import { MicroChat } from "../src/MicroChat"
 import { SupportedMessage } from "../src/Message/types"
 import { Tools } from "../src/Tools"
 import { MicroAgent } from "../src/MicroAgent"
-import { TransformersPipelineFactory } from "../src/TransformersPipelineFactory"
+import { PipelineFactory } from "../src/PipelineFactory"
 
 function getTime() {
     console.log('------- inside getTime() -------')
@@ -10,7 +10,7 @@ function getTime() {
 }
 
 async function main() {
-    const pipelineFactory = new TransformersPipelineFactory('text-generation', 'onnx-community/LFM2-1.2B-Tool-ONNX', {
+    const pipelineFactory = new PipelineFactory('text-generation', 'onnx-community/LFM2-1.2B-Tool-ONNX', {
         dtype: 'q4',
     })
     const microChat = new MicroChat(pipelineFactory)

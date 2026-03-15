@@ -1,11 +1,11 @@
 import { createUserMessage } from "../src/Message/factories"
 import { SupportedMessage } from "../src/Message/types"
 import { MicroChat } from "../src/MicroChat"
-import { TransformersPipelineFactory } from "../src/TransformersPipelineFactory"
+import { PipelineFactory } from "../src/PipelineFactory"
 
 
 async function main() {
-    const pipelineFactory = new TransformersPipelineFactory('text-generation', 'onnx-community/LFM2-1.2B-Tool-ONNX', {
+    const pipelineFactory = new PipelineFactory('text-generation', 'onnx-community/LFM2-1.2B-Tool-ONNX', {
         dtype: 'q4',
     })
     const llm = new MicroChat(pipelineFactory)

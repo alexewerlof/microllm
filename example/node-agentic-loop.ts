@@ -4,7 +4,7 @@ import { Tools } from "../src/Tools"
 import { MicroAgent } from "../src/MicroAgent"
 import { isAssistantMessage } from "../src/Message/guards"
 import { createUserMessage } from "../src/Message/factories"
-import { TransformersPipelineFactory } from "../src/TransformersPipelineFactory"
+import { PipelineFactory } from "../src/PipelineFactory"
 
 function getRandom() {
     return Math.floor(Math.random() * 5)
@@ -13,7 +13,7 @@ function getRandom() {
 getRandom.description = 'Returns a random integer between 0 and 4.'
 
 async function main() {
-    const pipelineFactory = new TransformersPipelineFactory('text-generation', 'onnx-community/LFM2-1.2B-Tool-ONNX', {
+    const pipelineFactory = new PipelineFactory('text-generation', 'onnx-community/LFM2-1.2B-Tool-ONNX', {
         dtype: 'q4',
     })
     const llm = new MicroChat(pipelineFactory)

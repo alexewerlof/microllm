@@ -68,7 +68,7 @@ export async function createPipeline<TTask extends PipelineType>(task: TTask, mo
     })
 }
 
-export class TransformersPipelineFactory<TTask extends PipelineType> {
+export class PipelineFactory<TTask extends PipelineType> {
     #task: TTask
     #pipeline: Promise<AllTasks[TTask]> | null = null
     #modelId: string

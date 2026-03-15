@@ -1,11 +1,11 @@
 import { FeatureExtractionPipelineOptions } from '@huggingface/transformers'
-import { TransformersPipelineFactory } from './TransformersPipelineFactory.js'
+import { PipelineFactory } from './PipelineFactory'
 
 /**
  * Generates embeddings using a caller-owned feature-extraction pipeline factory.
  */
 export class MicroEmbedder {
-    pipelineFactory: TransformersPipelineFactory<'feature-extraction'>
+    pipelineFactory: PipelineFactory<'feature-extraction'>
 
     /**
      * Creates a new Embedder instance.
@@ -13,11 +13,11 @@ export class MicroEmbedder {
      *
      * @example
      * ```ts
-     * const factory = new TransformersPipelineFactory('feature-extraction', 'Xenova/all-MiniLM-L6-v2')
+     * const factory = new PipelineFactory('feature-extraction', 'Xenova/all-MiniLM-L6-v2')
      * const embedder = new MicroEmbedder(factory)
      * ```
      */
-    constructor(pipelineFactory: TransformersPipelineFactory<'feature-extraction'>) {
+    constructor(pipelineFactory: PipelineFactory<'feature-extraction'>) {
         this.pipelineFactory = pipelineFactory
     }
 

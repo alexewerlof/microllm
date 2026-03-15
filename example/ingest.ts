@@ -2,11 +2,11 @@ import { glob, mkdir, readFile, writeFile } from 'node:fs/promises'
 import { dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { MicroEmbedder } from '../src/MicroEmbedder'
-import { TransformersPipelineFactory } from '../src/TransformersPipelineFactory.js'
+import { PipelineFactory } from '../src/PipelineFactory'
 import { chunkText } from '../src/RAG.js'
 import { VectorStore } from '../src/VectorStore'
 
-const embedderPipelineFactory = new TransformersPipelineFactory('feature-extraction', 'Xenova/all-MiniLM-L6-v2', { dtype: 'q4' })
+const embedderPipelineFactory = new PipelineFactory('feature-extraction', 'Xenova/all-MiniLM-L6-v2', { dtype: 'q4' })
 const microEmbedder = new MicroEmbedder(embedderPipelineFactory)
 
 const vectorStore = new VectorStore()
