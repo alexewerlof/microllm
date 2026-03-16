@@ -26,3 +26,42 @@ This repository contains a small & lightweight LLM library using [Liquid.ai](htt
 - The first few `test()` blocks test the expected behavior (happy case)
 - They are followed by more `test()` blocks which test different edge cases in the order of how common you believe they can be.
 - Larget algorithms are implemented in a series of functions that depend on each other. Always start the tests from the leaf nodes of that dependency tree to ensure the logic bottom up.
+
+## _test convention
+
+- Every module has a public API that is intended to be used by the other modules, and optionally some internal constructs (e.g. function, class) that are used for internal implementation.
+- Only the public API should be `export`ed directly. All internal constructs must NOT be exported directly — they should be exposed exclusively through `export const _test = { ... }`.
+- This gives consumers of the module a clear signal: direct exports are the stable public API, while anything behind `_test` is an implementation detail subject to change.
+- In tests, import only `_test` and the public API. Destructure `_test` at the top of the test file for convenience. Use `_test.fnName.name` in `describe()` blocks so the test name stays in sync with the code.
+
+For example:
+
+```ts
+// Internal implementation detail — NOT exported directly
+function getId(obj: {id: string}): string {
+  return obj.id
+}
+
+// Public API — exported directly
+export function getChunkIds(chunks: {id: string, content: string }[]): string[] {
+  return chunks.map(getId)
+}
+
+// Internal constructs exposed for testing only
+export const _test = { getId }
+```
+
+Then test it like this:
+
+```ts
+import { _test, getChunkIds } from '...'
+
+const { getId } = _test
+
+describe(_test.getId.name, () => {
+  // Test the internal function
+})
+describe(getChunkIds.name, () => {
+  // Test the public API
+})
+```
