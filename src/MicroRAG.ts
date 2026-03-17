@@ -2,6 +2,7 @@ import { isStr, isA, isDef, isPOJO } from 'jty'
 import { VectorStore, VectorStoreQueryResult } from './VectorStore.js'
 import { MicroEmbedder } from './MicroEmbedder.js'
 import { headerChunk } from './utilities/chunking.js'
+import { createSystemMessage } from './Message/factories.js'
 
 /**
  * Portable RAG (Retrieval-Augmented Generation) engine.
@@ -90,5 +91,22 @@ export class MicroRAG extends VectorStore{
             'User Question:',
             query,
         ].join('\n')
+    }
+
+    async getSimilaritySystemMessage(query: string, minScore?: number, maxResults?: number) {
+        const relevantContext = await this.getRelevantDocuments(query, minScore, maxResults)
+        if (relevantContext.length === 0) {
+            return undefined
+        }
+        // See the expected format here: https://docs.liquid.ai/lfm/models/lfm2-1.2b-rag
+        const ragSystemPrompLines = [
+            'The following documents may provide you additional information to answer questions:',
+        ]
+        for (let i = 0; i < relevantContext.length; i++) {
+            const { text, metadata } = relevantContext[i]
+            const tagName = `document${i + 1}`
+            ragSystemPrompLines.push(`<${tagName} metadata=${JSON.stringify((metadata))}>\n${text}\n</${tagName}>`)
+        }
+        return createSystemMessage(ragSystemPrompLines.join('\n\n'))
     }
 }

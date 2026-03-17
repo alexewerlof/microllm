@@ -8,6 +8,8 @@ import { MicroRAG } from "../src/MicroRAG"
 import { PipelineFactory } from "../src/PipelineFactory"
 import { VectorStore } from "../src/VectorStore"
 import { readFile } from 'node:fs/promises'
+import { isSystemMessage } from "../src/Message/guards"
+import { create } from "node:domain"
 
 async function loadContents(): Promise<{filePath: string, content: string}[]> {
     const ret = []
@@ -45,6 +47,10 @@ async function main() {
     await chatPipelineFactory.getPipeline()
 
     const originalSystemInstructions = 'You are an SRE expert'
+
+    const messages: SupportedMessage[] = [
+        createSystemMessage(originalSystemInstructions),
+    ]
     
     do {
         console.log('Prompt:')
@@ -56,26 +62,17 @@ async function main() {
             break
         }
 
-        const systemPrompt = createSystemMessage(originalSystemInstructions)
-
-        const relevantContext = await rag.getRelevantDocuments(userInput, undefined, 3)
-        if (relevantContext.length > 0) {
-            const ragSystemPromp = [originalSystemInstructions]
-            for (let i = 0; i < relevantContext.length; i++) {
-                const { text, metadata } = relevantContext[i]
-                const tagName = `document${i + 1}`
-                ragSystemPromp.push(`<${tagName} metadata=${JSON.stringify((metadata))}>\n${text}\n</${tagName}>`)
-            }
-            systemPrompt.content = ragSystemPromp.join('\n\n')
+        messages.push(createUserMessage(userInput))
+        const ephemeralMessages = [...messages]
+        
+        const relevantContext = await rag.getSimilaritySystemMessage(userInput, undefined, 3)
+        if (relevantContext) {
+            ephemeralMessages.push(relevantContext)
         }
 
-        const messages: SupportedMessage[] = [
-            systemPrompt,
-            createUserMessage(userInput),
-        ]
         console.log('Response:')
         const response = await llm.complete({
-            messages,
+            messages: ephemeralMessages,
             config: {
                 max_new_tokens: 512,
                 temperature: 0,
