@@ -1,0 +1,10 @@
+{
+    "$schema": "https://typedoc.org/schema.json",
+    "name": "jj",
+    "cleanOutputDir": true,
+    "excludePrivate": true,
+    "entryPoints": ["src/index.ts"],
+    "hostedBaseUrl": "https://alexewerlof.github.io/jj/",
+    "customFooterHtml": "Made with ❤️ by <a href='https://alexewerlof.com/'>Alex Ewerlöf</a>",
+    "out": "./doc"
+}
