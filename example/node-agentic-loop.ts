@@ -5,6 +5,7 @@ import { MicroAgent } from "../src/MicroAgent"
 import { isAssistantMessage } from "../src/Message/guards"
 import { createUserMessage } from "../src/Message/factories"
 import { PipelineFactory } from "../src/PipelineFactory"
+import { createProgressCallback } from "./progress-callback"
 
 function getRandom() {
     return Math.floor(Math.random() * 5)
@@ -15,6 +16,7 @@ getRandom.description = 'Returns a random integer between 0 and 4.'
 async function main() {
     const pipelineFactory = new PipelineFactory('text-generation', 'onnx-community/LFM2-1.2B-Tool-ONNX', {
         dtype: 'q4',
+        progress_callback: createProgressCallback('Chat Pipeline')
     })
     const llm = new MicroChat(pipelineFactory)
     const messages: SupportedMessage[] = [
@@ -37,7 +39,6 @@ async function main() {
 
     const agent = new MicroAgent(llm)
 
-    
     const tools = new Tools()
     tools.addTool(getRandom.name, getRandom.description).func = getRandom
 

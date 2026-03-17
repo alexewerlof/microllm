@@ -6,10 +6,8 @@ import { MicroChat } from "../src/MicroChat"
 import { MicroEmbedder } from "../src/MicroEmbedder"
 import { MicroRAG } from "../src/MicroRAG"
 import { PipelineFactory } from "../src/PipelineFactory"
-import { VectorStore } from "../src/VectorStore"
 import { readFile } from 'node:fs/promises'
-import { isSystemMessage } from "../src/Message/guards"
-import { create } from "node:domain"
+import { createProgressCallback } from "./progress-callback"
 
 async function loadContents(): Promise<{filePath: string, content: string}[]> {
     const ret = []
@@ -23,9 +21,10 @@ async function loadContents(): Promise<{filePath: string, content: string}[]> {
 }
 
 async function main() {
-    const embeddingPipelineFactory = new PipelineFactory('feature-extraction', 'Xenova/all-MiniLM-L6-v2', { dtype: 'q4' })
-    // https://docs.liquid.ai/lfm/models/lfm2-1.2b-rag
-    const chatPipelineFactory = new PipelineFactory('text-generation', 'onnx-community/LFM2-1.2B-RAG-ONNX', { dtype: 'q4'})
+    const embeddingPipelineFactory = new PipelineFactory('feature-extraction', 'Xenova/all-MiniLM-L6-v2', {
+        dtype: 'q4',
+        progress_callback: createProgressCallback('Embedding Pipeline'),
+    })
 
     const microEmbedder = new MicroEmbedder(embeddingPipelineFactory)
     await embeddingPipelineFactory.getPipeline()
@@ -39,6 +38,12 @@ async function main() {
         console.timeEnd(filePath)
     }
     console.timeEnd('Initializing RAG...')
+
+    // https://docs.liquid.ai/lfm/models/lfm2-1.2b-rag
+    const chatPipelineFactory = new PipelineFactory('text-generation', 'onnx-community/LFM2-1.2B-RAG-ONNX', {
+        dtype: 'q4',
+        progress_callback: createProgressCallback('Chat Pipeline'),
+    })
 
     const llm = new MicroChat(chatPipelineFactory)
 

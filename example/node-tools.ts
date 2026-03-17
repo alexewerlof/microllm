@@ -3,6 +3,7 @@ import { SupportedMessage } from "../src/Message/types"
 import { Tools } from "../src/Tools"
 import { MicroAgent } from "../src/MicroAgent"
 import { PipelineFactory } from "../src/PipelineFactory"
+import { createProgressCallback } from "./progress-callback"
 
 function getTime() {
     console.log('------- inside getTime() -------')
@@ -12,6 +13,7 @@ function getTime() {
 async function main() {
     const pipelineFactory = new PipelineFactory('text-generation', 'onnx-community/LFM2-1.2B-Tool-ONNX', {
         dtype: 'q4',
+        progress_callback: createProgressCallback('Chat Pipeline')
     })
     const microChat = new MicroChat(pipelineFactory)
     const messages: SupportedMessage[] = [

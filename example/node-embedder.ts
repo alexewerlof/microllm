@@ -1,8 +1,13 @@
 import { MicroEmbedder } from "../src/MicroEmbedder";
 import { PipelineFactory } from "../src/PipelineFactory";
+import { createProgressCallback } from "./progress-callback";
 
 async function main() {
-    const pipelineFactory = new PipelineFactory('feature-extraction', 'Xenova/all-MiniLM-L6-v2')
+    const pipelineFactory = new PipelineFactory('feature-extraction', 'Xenova/all-MiniLM-L6-v2', {
+        dtype: 'q4',
+        progress_callback: createProgressCallback('Embedding Pipeline'),
+    })
+
     const microEmbedder = new MicroEmbedder(pipelineFactory)
     const sentences = [
         "Hello, how are you?",
