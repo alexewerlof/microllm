@@ -1,14 +1,14 @@
 import { glob } from "node:fs/promises"
 import { join, resolve } from "node:path"
 import { createSystemMessage, createUserMessage } from "../src/Message/factories"
-import { SupportedMessage, SystemMessage } from "../src/Message/types"
+import { SupportedMessage } from "../src/Message/types"
 import { MicroChat } from "../src/MicroChat"
 import { MicroEmbedder } from "../src/MicroEmbedder"
 import { MicroRAG } from "../src/MicroRAG"
 import { PipelineFactory } from "../src/PipelineFactory"
 import { VectorStore } from "../src/VectorStore"
 import { readFile } from 'node:fs/promises'
-import { headerChunk } from "../src/chunking"
+import { headerChunk } from "../src/utilities/chunking"
 
 async function createVectorDbFromContent(embedder: MicroEmbedder, contentRoot: string): Promise<VectorStore> {
     const vectorStore = new VectorStore()

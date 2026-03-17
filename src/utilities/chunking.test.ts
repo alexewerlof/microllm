@@ -1,6 +1,6 @@
 import { describe, test } from 'node:test'
 import assert from 'node:assert/strict'
-import { headerChunk, _test } from './chunking'
+import { headerChunk, _test } from './chunking.js'
 
 const { parseHeaderLine, splitIntoSections, assignChildren, toHeaderLine, assignBreadcrumbs, sectionToChunk } = _test
 
