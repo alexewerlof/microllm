@@ -29,8 +29,7 @@ async function main() {
     await embeddingPipelineFactory.getPipeline()
 
     console.time('Initializing RAG...')
-    const vectorStore = new VectorStore()
-    const rag = new MicroRAG(microEmbedder, vectorStore)
+    const rag = new MicroRAG(microEmbedder)
     const fileContents = await loadContents()
     for(const { filePath, content } of fileContents) {
         console.time(filePath)
@@ -59,7 +58,7 @@ async function main() {
 
         const systemPrompt = createSystemMessage(originalSystemInstructions)
 
-        const relevantContext = await rag.getRelevantContext(userInput, undefined, 3)
+        const relevantContext = await rag.getRelevantDocuments(userInput, undefined, 3)
         if (relevantContext.length > 0) {
             const ragSystemPromp = [originalSystemInstructions]
             for (let i = 0; i < relevantContext.length; i++) {
