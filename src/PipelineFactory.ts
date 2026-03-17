@@ -1,6 +1,6 @@
-import { hasPath, isDef, isNullish, isObj, isStr } from 'jty'
-import { pipeline, env, PipelineType, AllTasks, PretrainedModelOptions, Disposable } from '@huggingface/transformers'
-import { pipelineProgressConsoleReporter } from './util.js'
+import { hasPath, isObj, isStr } from 'jty'
+import { pipeline, env, PipelineType, AllTasks, PretrainedModelOptions } from '@huggingface/transformers'
+import { pipelineProgressConsoleReporter } from './utilities/download.js'
 
 /*
  * Tips for future development:
