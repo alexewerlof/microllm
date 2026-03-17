@@ -1,6 +1,6 @@
 import { describe, test } from 'node:test'
 import assert from 'node:assert/strict'
-import { Estimator, _test } from './estimator'
+import { Estimator, _test } from './Estimator.js'
 
 const { getAverageSpeed } = _test
 
@@ -8,13 +8,14 @@ describe(_test.getAverageSpeed.name, () => {
     test('calculates average speed from data points', () => {
         const dp = (timestamp: number, progress: number) => ({ timestamp, progress })
 
+        const now = Date.now()
         const data = [
-            dp(1000, 0),
-            dp(2000, 0.25),
-            dp(3000, 0.5),
+            dp(now, 0),
+            dp(now + 1000, 25),
+            dp(now + 2000, 50),
         ]
 
-        assert.strictEqual(getAverageSpeed(data), 0.25 / 1000)
+        assert.strictEqual(getAverageSpeed(data), 25 / 1000)
     })
 
     test('throws a TypeError if the input is not an array', () => {
@@ -43,10 +44,11 @@ describe(_test.getAverageSpeed.name, () => {
 
 describe(Estimator.name, () => {
     test('calculates remaining time correctly', () => {
+        const now = Date.now()
         const estimator = new Estimator()
-        estimator.report(0, 1000)
-        estimator.report(0.25, 2000)
-        estimator.report(0.5, 3000)
+        estimator.report(0, now)
+        estimator.report(25, now + 1000)
+        estimator.report(50, now + 2000)
 
         assert.strictEqual(estimator.remaining, 2000)
     })
@@ -59,9 +61,9 @@ describe(Estimator.name, () => {
             message: 'Expected a finite number for progress. Got 1 (string)',
         })
 
-        assert.throws(() => estimator.report(100), {
+        assert.throws(() => estimator.report(101), {
             name: 'RangeError',
-            message: 'Progress (100) must be between 0 and 1 (inclusive)',
+            message: 'Progress (101) must be between 0 and 100 (inclusive)',
         })
     })
 })
