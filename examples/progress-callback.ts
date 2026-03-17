@@ -5,6 +5,7 @@ export function createProgressCallback(task: string = ''): ProgressCallback {
     const cliProgressContainer = new cliProgress.MultiBar({
         format: task + ` {bar} | {name} | {file} | {percentage} | Remaining: {eta_formatted}`,
         stopOnComplete: true,
+        hideCursor: false,
     }, cliProgress.Presets.shades_grey);
 
     const files: {
