@@ -8,21 +8,18 @@ import { MicroRAG } from "../src/MicroRAG"
 import { PipelineFactory } from "../src/PipelineFactory"
 import { VectorStore } from "../src/VectorStore"
 import { readFile } from 'node:fs/promises'
-import { headerChunk } from "../src/utilities/chunking"
 
-async function createVectorDbFromContent(embedder: MicroEmbedder, contentRoot: string): Promise<VectorStore> {
-    const vectorStore = new VectorStore()
-    for await (const filePath of glob('**/*.md', { cwd: contentRoot })) {
+async function loadContents(): Promise<{filePath: string, content: string}[]> {
+    const ret = []
+    const searchRoot = resolve(import.meta.dirname)
+    for await (const filePath of glob('content/**/*.md', { cwd: searchRoot })) {
         console.log(`Found file: ${filePath}`)
-        const document = await readFile(join(contentRoot, filePath), 'utf-8')
-        const chunks = headerChunk(document, { docId: filePath })
-        for (const chunk of chunks) {
-            const embedding = await embedder.embed(chunk.content)
-            vectorStore.addDocument(chunk.content, embedding, { filename: filePath })
-        }
+        const content = await readFile(join(searchRoot, filePath), 'utf-8')
+        ret.push({ filePath, content })
     }
-    return vectorStore
+    return ret
 }
+
 async function main() {
     const embeddingPipelineFactory = new PipelineFactory('feature-extraction', 'Xenova/all-MiniLM-L6-v2', { dtype: 'q4' })
     // https://docs.liquid.ai/lfm/models/lfm2-1.2b-rag
@@ -31,11 +28,17 @@ async function main() {
     const microEmbedder = new MicroEmbedder(embeddingPipelineFactory)
     await embeddingPipelineFactory.getPipeline()
 
-    console.time('Initializing vector store...')
-    const vectorStore = await createVectorDbFromContent(microEmbedder, resolve(import.meta.dirname, 'content'))
-    console.timeEnd('Initializing vector store...')
-
+    console.time('Initializing RAG...')
+    const vectorStore = new VectorStore()
     const rag = new MicroRAG(microEmbedder, vectorStore)
+    const fileContents = await loadContents()
+    for(const { filePath, content } of fileContents) {
+        console.time(filePath)
+        await rag.addDocument(content, { src: filePath })
+        console.timeEnd(filePath)
+    }
+    console.timeEnd('Initializing RAG...')
+
     const llm = new MicroChat(chatPipelineFactory)
 
     console.log('[Downloading and] loading pipelines...')
@@ -60,7 +63,7 @@ async function main() {
         if (relevantContext.length > 0) {
             const ragSystemPromp = [originalSystemInstructions]
             for (let i = 0; i < relevantContext.length; i++) {
-                const { score, text, metadata } = relevantContext[i]
+                const { text, metadata } = relevantContext[i]
                 const tagName = `document${i + 1}`
                 ragSystemPromp.push(`<${tagName} metadata=${JSON.stringify((metadata))}>\n${text}\n</${tagName}>`)
             }

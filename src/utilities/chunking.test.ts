@@ -201,15 +201,6 @@ describe(sectionToChunk.name, () => {
         assert.strictEqual('parent' in chunk.metadata, false)
     })
 
-    test('merges globalMetadata into chunk metadata', () => {
-        const section = { title: 'Title', level: 1, id: 1, children: [], contentLines: ['Body.'] }
-        const chunk = sectionToChunk(section, { docId: 42, source: 'test' })
-
-        assert.strictEqual(chunk.metadata.docId, 42)
-        assert.strictEqual(chunk.metadata.source, 'test')
-        assert.strictEqual(chunk.metadata.title, 'Title')
-    })
-
     test('joins multi-line content with newlines', () => {
         const section = { title: 'T', level: 1, id: 1, children: [], contentLines: ['Line 1', 'Line 2'] }
         const chunk = sectionToChunk(section)
@@ -244,16 +235,6 @@ describe(headerChunk.name, () => {
             content: '# Top title\n## Section 2\nContent for section 2.',
             metadata: { title: 'Section 2', level: 2, id: 3, parent: 1, children: [] },
         })
-    })
-
-    test('includes globalMetadata in each chunk', () => {
-        const md = '# Title\nBody text.'
-        const chunks = headerChunk(md, { docId: 42, source: 'test' })
-
-        assert.strictEqual(chunks.length, 1)
-        assert.strictEqual(chunks[0].metadata.docId, 42)
-        assert.strictEqual(chunks[0].metadata.source, 'test')
-        assert.strictEqual(chunks[0].metadata.title, 'Title')
     })
 
     test('returns empty array for empty string', () => {
@@ -337,13 +318,6 @@ describe(headerChunk.name, () => {
         assert.throws(
             () => headerChunk(123 as any),
             { name: 'TypeError', message: /Expected markdown to be a string/ },
-        )
-    })
-
-    test('throws TypeError when globalMetadata is not a plain object', () => {
-        assert.throws(
-            () => headerChunk('# A\ntext', 'bad' as any),
-            { name: 'TypeError', message: /Expected globalMetadata to be a plain object/ },
         )
     })
 

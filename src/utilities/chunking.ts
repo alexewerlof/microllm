@@ -180,19 +180,17 @@ function assignBreadcrumbs(sections: Section[]): Map<number, string> {
  * @example
  * ```ts
  * const section = { title: 'Intro', level: 1, id: 1, children: [2], contentLines: ['Hello.'] }
- * sectionToChunk(section, { docId: 5 })
- * // { content: 'Hello.', metadata: { docId: 5, title: 'Intro', level: 1, id: 1, children: [2] } }
+ * sectionToChunk(section)
+ * // { content: 'Hello.', metadata: { title: 'Intro', level: 1, id: 1, children: [2] } }
  * ```
  *
  * @param section a parsed section
- * @param globalMetadata optional metadata to merge into the chunk
  * @returns the document chunk
  */
-function sectionToChunk(section: Section, globalMetadata?: Record<string, any>): DocumentChunk {
+function sectionToChunk(section: Section): DocumentChunk {
     return {
         content: section.contentLines.join('\n').trim(),
         metadata: {
-            ...globalMetadata,
             title: section.title,
             level: section.level,
             id: section.id,
@@ -221,15 +219,11 @@ function sectionToChunk(section: Section, globalMetadata?: Record<string, any>):
  * The `children` and `parent` fields in the metadata allow you to understand
  * the hierarchy of the chunks.
  *
- * @param markdown the document to chunk
- * @param globalMetadata optional metadata to include in each chunk
+ * @param markdown the markdown document to chunk
  */
-export function headerChunk(markdown: string, globalMetadata?: Record<string, any>): DocumentChunk[] {
+export function headerChunk(markdown: string): DocumentChunk[] {
     if (!isStr(markdown)) {
         throw new TypeError('Expected markdown to be a string, got ' + typeof markdown)
-    }
-    if (isDef(globalMetadata) && !isPOJO(globalMetadata)) {
-        throw new TypeError('Expected globalMetadata to be a plain object, got ' + typeof globalMetadata)
     }
 
     const sections = splitIntoSections(markdown.split('\n'))
@@ -239,7 +233,7 @@ export function headerChunk(markdown: string, globalMetadata?: Record<string, an
     return sections
         .filter(s => s.contentLines.join('\n').trim().length > 0)
         .map(s => {
-            const chunk = sectionToChunk(s, globalMetadata)
+            const chunk = sectionToChunk(s)
             return { ...chunk, content: breadcrumbs.get(s.id)! + '\n' + chunk.content }
         })
 }

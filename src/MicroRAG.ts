@@ -1,21 +1,7 @@
-import { isStr, isA } from 'jty'
+import { isStr, isA, isDef, isPOJO } from 'jty'
 import { VectorStore } from './VectorStore.js'
 import { MicroEmbedder } from './MicroEmbedder.js'
-
-/**
- * Splits text into chunks by double-newline, keeping only non-empty chunks.
- * @param text - The raw text content.
- * @returns Non-empty chunks.
- */
-export function chunkText(text: string): string[] {
-    if (!isStr(text)) {
-        throw new TypeError(`Expected string for text, but got ${text} (${typeof text})`)
-    }
-    return text
-        .split(/\n\n+/)
-        .map((c) => c.trim())
-        .filter((c) => c.length)
-}
+import { headerChunk } from './utilities/chunking.js'
 
 /**
  * Portable RAG (Retrieval-Augmented Generation) engine.
@@ -50,18 +36,22 @@ export class MicroRAG {
     /**
      * Chunks text, embeds each chunk, and adds them to the vector store.
      * @param text - The document text to add.
-     * @param metadata - Optional metadata (e.g., { filename: "intro.md" }).
+     * @param docMetadata - Optional metadata (e.g., { filename: "intro.md" }).
      * @returns The number of chunks indexed.
      */
-    async addDocument(text: string, metadata: object = {}): Promise<number> {
+    async addDocument(text: string, docMetadata: object = {}): Promise<number> {
         if (!isStr(text)) {
             throw new TypeError(`Expected string for text, but got ${text} (${typeof text})`)
         }
 
-        const chunks = chunkText(text)
-        for (const chunk of chunks) {
-            const embedding = await this.#embedder.embed(chunk)
-            this.#vectorStore.addDocument(chunk, embedding, metadata)
+        if (isDef(docMetadata) && !isPOJO(docMetadata)) {
+            throw new TypeError(`Expected plain object for docMetadata, but got ${docMetadata} (${typeof docMetadata})`)
+        }
+
+        const chunks = headerChunk(text)
+        for (const { content, metadata } of chunks) {
+            const embedding = await this.#embedder.embed(content)
+            this.#vectorStore.addDocument(content, embedding, {...docMetadata, ...metadata})
         }
         return chunks.length
     }
