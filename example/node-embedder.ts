@@ -18,4 +18,7 @@ async function main() {
     console.log('All embeddings generated.')
 }
 
-main().catch(console.error)
+main().catch(error => {
+    console.error('An error occurred:', error)
+    process.exit(1)
+})
