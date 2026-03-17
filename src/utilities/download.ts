@@ -1,6 +1,6 @@
-import { Message } from '@huggingface/transformers'
 import { isNum } from 'jty'
 import { clamp } from './numbers.js'
+import { bytesToHumanReadable } from './format.js'
 
 function simpleProgressBar(percent: number): string {
     if (!isNum(percent)) {
@@ -12,18 +12,32 @@ function simpleProgressBar(percent: number): string {
     return `${filled}${empty} ${percent.toFixed(2)}%`
 }
 
+/**
+ * The library has realized it needs a specific file and has started the process of downloading it.
+ * This happens before any data transfer begins.
+ * Defined: name, file
+ */
 interface PipelineProgressInitiateEvent {
     status: 'initiate'
     name: string
     file: string
 }
 
+/**
+ * Fired at the start of the download (even if the file is already cached).
+ * Defined: name, file
+ */
 interface PipelineProgressDownloadEvent {
     status: 'download'
     name: string
     file: string
 }
 
+/**
+ * The file is being downloaded OR being transferred into memory.
+ * Fired with progress=100 if the file is already downloaded
+ * Defined: name, file, progress, total
+ */
 interface PipelineProgressProgressEvent {
     status: 'progress'
     /** The name of the file being processed. */
@@ -36,6 +50,11 @@ interface PipelineProgressProgressEvent {
     total: number
 }
 
+/**
+ * A special final event. It signifies that all necessary files have been
+ * loaded, parsed, and the model is fully initialized and ready for inference.
+ * Defined: task, model
+ */
 interface PipelineProgressReadyEvent {
     status: 'ready'
     /** The overall pipeline task type (e.g. 'text-generation') */
@@ -44,6 +63,10 @@ interface PipelineProgressReadyEvent {
     model: string
 }
 
+/**
+ * The bytes for this individual file have been fully loaded into memory.
+ * Defined: name, file
+ */
 interface PipelineProgressDoneEvent {
     status: 'done'
     name: string
@@ -54,6 +77,12 @@ interface PipelineProgressDoneEvent {
  * An object detailing the current progress of a pipeline initialization step.
  * A single name like 'Xenova/all-MiniLM-L6-v2' may initiate downloading and loading
  * multiple files like 'tokenizer_config.json', 'config.json', 'onnx/model_quantized.onnx', etc.
+ * The order of the events are:
+ * 1. initiate (for each file)
+ * 2. download (for each file)
+ * 3. progress (multiple times per file)
+ * 4. done (for each file)
+ * 5. ready (once per task)
  */
 type PipelineProgressEvent =
     | PipelineProgressInitiateEvent
@@ -69,44 +98,21 @@ type PipelineProgressEvent =
 export function pipelineProgressConsoleReporter(progressEvent: PipelineProgressEvent) {
     switch (progressEvent.status) {
         case 'initiate':
-            /**
-             * The library has realized it needs a specific file and has started the process of fetching it.
-             * This happens before any data transfer begins.
-             * Defined: name, file
-             */
-            console.debug(`File Initiate:\nName: ${progressEvent.name}, File: ${progressEvent.file}`)
+            console.debug(`File ${progressEvent.status}, Name: ${progressEvent.name}, File: ${progressEvent.file}`)
             break
         case 'download':
-            /**
-             * Fired at the start of the download.
-             * Defined: name, file
-             */
-            console.debug(`File Download:\nName: ${progressEvent.name}, File: ${progressEvent.file}`)
+            console.debug(`File ${progressEvent.status}, Name: ${progressEvent.name}, File: ${progressEvent.file}`)
             break
         case 'progress':
-            /**
-             * The file is being downloaded OR being transferred into memory.
-             * Fired with progress=100 if the file is already downloaded
-             * Defined: name, file, progress, total
-             */
             console.debug(
-                `File Progress:\nName: ${progressEvent.name}, File: ${progressEvent.file}, Progress: ${simpleProgressBar(progressEvent.progress)} Total: ${progressEvent.total}`,
+                `File ${progressEvent.status}, Name: ${progressEvent.name}, File: ${progressEvent.file}, Progress: ${simpleProgressBar(progressEvent.progress)} Total: ${bytesToHumanReadable(progressEvent.total)}`,
             )
             break
-        case 'ready':
-            /**
-             * A special final event. It signifies that all necessary files have been
-             * loaded, parsed, and the model is fully initialized and ready for inference.
-             * Defined: task, model
-             */
-            console.debug(`Task Ready:\nTask: ${progressEvent.task}, Model ${progressEvent.model}`)
-            break
         case 'done':
-            /**
-             * The bytes for this individual file have been fully loaded into memory.
-             * Defined: name, file
-             */
-            console.debug(`File Done:\nName: ${progressEvent.name}, File: ${progressEvent.file}`)
+            console.debug(`File ${progressEvent.status}, Name: ${progressEvent.name}, File: ${progressEvent.file}`)
+            break
+        case 'ready':
+            console.debug(`Task ${progressEvent.status}, Task: ${progressEvent.task}, Model ${progressEvent.model}`)
             break
         default:
             console.warn(`Progress event with unknown status: ${JSON.stringify(progressEvent)}`)
