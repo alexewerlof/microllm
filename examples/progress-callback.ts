@@ -3,7 +3,7 @@ import cliProgress from 'cli-progress'
 
 export function createProgressCallback(task: string = ''): ProgressCallback {
     const cliProgressContainer = new cliProgress.MultiBar({
-        format: task + ` {bar} | {name} | {file} | {percentage} | Remaining: {eta_formatted}`,
+        format: task + ` > {name} {bar} {file} | Progress: {percentage}% | Remaining: {eta_formatted}`,
         stopOnComplete: true,
         hideCursor: false,
     }, cliProgress.Presets.shades_grey);
@@ -14,7 +14,7 @@ export function createProgressCallback(task: string = ''): ProgressCallback {
         }
     } = {}
 
-    function getBar(name: string, file: string): cliProgress.SingleBar {
+    function getBar({ name, file }: { name: string, file: string }): cliProgress.SingleBar {
         if (!files[name]) {
             files[name] = {}
         }
@@ -27,17 +27,17 @@ export function createProgressCallback(task: string = ''): ProgressCallback {
     return (progressInfo: ProgressInfo) => {
         switch (progressInfo.status) {
             case 'initiate':
-                getBar(progressInfo.name, progressInfo.file).start(100, 0, progressInfo)
+                getBar(progressInfo).start(100, 0, progressInfo)
                 break
             case 'download':
-                getBar(progressInfo.name, progressInfo.file).start(100, 0, progressInfo)
+                getBar(progressInfo).start(100, 0, progressInfo)
                 break
             case 'progress':
-                getBar(progressInfo.name, progressInfo.file).update(progressInfo.progress, progressInfo)
+                getBar(progressInfo).update(progressInfo.progress, progressInfo)
                 break
             case 'done':
                 {
-                    const bar = getBar(progressInfo.name, progressInfo.file)
+                    const bar = getBar(progressInfo)
                     bar.update(bar.getTotal(), progressInfo)
                     bar.stop()
                 }

@@ -23,7 +23,7 @@ async function loadContents(): Promise<{filePath: string, content: string}[]> {
 async function main() {
     const embeddingPipelineFactory = new PipelineFactory('feature-extraction', 'Xenova/all-MiniLM-L6-v2', {
         dtype: 'q4',
-        progress_callback: createProgressCallback('Embedding Pipeline'),
+        progress_callback: createProgressCallback('feature-extraction'),
     })
 
     const microEmbedder = new MicroEmbedder(embeddingPipelineFactory)
@@ -42,7 +42,7 @@ async function main() {
     // https://docs.liquid.ai/lfm/models/lfm2-1.2b-rag
     const chatPipelineFactory = new PipelineFactory('text-generation', 'onnx-community/LFM2-1.2B-RAG-ONNX', {
         dtype: 'q4',
-        progress_callback: createProgressCallback('Chat Pipeline'),
+        progress_callback: createProgressCallback('text-generation'),
     })
 
     const llm = new MicroChat(chatPipelineFactory)
