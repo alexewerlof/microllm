@@ -1,7 +1,7 @@
 {
     "name": "microllm",
     "description": "A minimalistic library to run Small Language Models (SLMs) in JavaScript, supporting Node.js and browsers.",
-    "version": "0.2.0",
+    "version": "0.2.1",
     "main": "./lib/bundle.cjs",
     "module": "./lib/bundle.js",
     "types": "./lib/bundle.d.ts",
