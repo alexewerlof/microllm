@@ -157,9 +157,7 @@ function toolCallObjArgumentsToStr(argStr?: string): string {
 function toolCallsMessageToPython(toolCallsMessage: ToolCallsMessage): AssistantMessage {
     const content = toolCallsMessage.tool_calls
         .filter(isToolCallObj)
-        .map((toolCallObj) => {
-            return `${toolCallObj.function.name}(${toolCallObjArgumentsToStr(toolCallObj.function.arguments)})`
-        })
+        .map(({ function: { name, arguments: args }}) => `${name}(${toolCallObjArgumentsToStr(args)})`)
         .join(',')
     return createAssistantMessage(`${TOOL_CALL_START_TOKEN}[${content}]${TOOL_CALL_END_TOKEN}`)
 }

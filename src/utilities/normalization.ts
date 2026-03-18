@@ -6,7 +6,7 @@ import { isArr } from 'jty'
  * @param messageArr The array of messages to process.
  * @returns A new array with system messages at the start.
  */
-export function moveAllSystemMessagesToStart(messageArr: Message[]): Message[] {
+function moveAllSystemMessagesToStart(messageArr: Message[]): Message[] {
     if (!isArr(messageArr)) {
         throw new TypeError(`Expected an array. Got ${messageArr} (${typeof messageArr})`)
     }
@@ -27,7 +27,7 @@ export function moveAllSystemMessagesToStart(messageArr: Message[]): Message[] {
  * @param messageArr The array of messages to process.
  * @returns A new array with consecutive messages from the same role merged.
  */
-export function mergeMessages(messageArr: Message[]): Message[] {
+function mergeConsecutiveMessages(messageArr: Message[]): Message[] {
     if (!isArr(messageArr)) {
         throw new TypeError(`Expected an array. Got ${messageArr} (${typeof messageArr})`)
     }
@@ -59,5 +59,7 @@ export function mergeMessages(messageArr: Message[]): Message[] {
  * @returns A new array with normalized messages.
  */
 export function normalizeMessageArray(messageArray: Message[]): Message[] {
-    return mergeMessages(moveAllSystemMessagesToStart(messageArray))
+    return mergeConsecutiveMessages(moveAllSystemMessagesToStart(messageArray))
 }
+
+export const _test = { moveAllSystemMessagesToStart, mergeMessages: mergeConsecutiveMessages }
