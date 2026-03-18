@@ -6,7 +6,6 @@ export interface DocumentChunkMetadata {
     id: number
     parent?: number
     children?: number[]
-    [key: string]: any
 }
 
 export interface DocumentChunk {

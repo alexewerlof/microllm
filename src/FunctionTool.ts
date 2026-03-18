@@ -241,13 +241,13 @@ export class FunctionTool {
     name: string
 
     /** The value of `this` inside the function when it is invoked */
-    thisArg: any = undefined
+    thisArg: unknown = undefined
 
     /** An array of descriptions for each parameter the tool's function accepts. */
     properties: FunctionToolProperty[] = []
 
     /** The actual JavaScript function to be executed. */
-    func?: (...args: any[]) => any
+    func?: (...args: unknown[]) => unknown
 
     /** A description of what the tool does. */
     description = ''
@@ -304,7 +304,7 @@ export class FunctionTool {
      * @returns The tool instance for chaining.
      * @throws TypeError If `func` is not a function.
      */
-    definition(func: (...args: any[]) => any): this {
+    definition(func: (...args: unknown[]) => unknown): this {
         if (!isFn(func)) {
             throw new TypeError(`Expected tool func to be a function. Got ${func}`)
         }
@@ -322,7 +322,7 @@ export class FunctionTool {
      * @param thisArg The object to use as the `this` context.
      * @returns The tool instance for chaining.
      */
-    ['this'](thisArg: any): this {
+    ['this'](thisArg: unknown): this {
         this.thisArg = thisArg
         return this
     }

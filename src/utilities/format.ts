@@ -12,15 +12,6 @@ interface DurationFormatOptions {
     style?: 'long' | 'short' | 'narrow' | 'digital'
 }
 
-declare global {
-    namespace Intl {
-        class DurationFormat {
-            constructor(locale?: string | string[], options?: DurationFormatOptions)
-            format(duration: DurationParts): string
-        }
-    }
-}
-
 // -- Constants --
 
 const DEFAULT_DURATION_STYLE: DurationFormatOptions = { style: 'long' }
@@ -102,6 +93,7 @@ export function durL10n(
     const duration = millisecondsToDurationParts(milliseconds)
 
     try {
+        // @ts-expect-error -- DurationFormat is not yet in TypeScript's libdefs
         const formatter = new Intl.DurationFormat(locale, options)
         return formatter.format(duration)
     } catch {

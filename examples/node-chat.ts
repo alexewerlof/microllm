@@ -1,4 +1,4 @@
-import { createAssistantMessage, createUserMessage } from '../src/Message/factories'
+import { createUserMessage } from '../src/Message/factories'
 import { SupportedMessage } from '../src/Message/types'
 import { MicroChat } from '../src/MicroChat'
 import { PipelineFactory } from '../src/PipelineFactory'

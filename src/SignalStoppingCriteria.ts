@@ -26,10 +26,9 @@ export class SignalStoppingCriteria extends StoppingCriteria {
      * Called by the generation pipeline to determine if generation should be stopped.
      *
      * @param {unknown[]} input_ids The current token sequence IDs generated so far.
-     * @param {unknown[]} _scores The predicted scores for the next token.
      * @returns {boolean[]} An array of booleans indicating whether generation should stop for each sequence.
      */
-    _call(input_ids: unknown[], _scores: unknown[]): boolean[] {
+    _call(input_ids: unknown[]): boolean[] {
         return new Array(input_ids.length).fill(this.#signal.aborted)
     }
 

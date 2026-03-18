@@ -1,4 +1,4 @@
-import { hasProp, isArr, isArrLen, isObj, isStr } from 'jty'
+import { hasProp, inArr, isArr, isArrLen, isObj, isStr } from 'jty'
 import {
     AssistantMessage,
     MessageRole,
@@ -22,10 +22,10 @@ export const SUPPORTED_ROLES = ['system', 'user', 'assistant', 'tool'] as const
  * @returns True if the object matches the criteria, false otherwise.
  */
 export function isMessageRole(x: unknown): x is MessageRole {
-    if (!hasProp(x, 'role')) {
+    if (!hasProp(x, 'role') || !isStr(x.role)) {
         return false
     }
-    return SUPPORTED_ROLES.includes(x.role as any)
+    return inArr(x.role, SUPPORTED_ROLES)
 }
 
 /**
@@ -48,7 +48,7 @@ export function isMessage(x: unknown): x is Message {
  * @param x The object to validate.
  * @returns True if it is a valid SystemMessage representation, false otherwise.
  */
-export function isSystemMessage(x: any): x is SystemMessage {
+export function isSystemMessage(x: unknown): x is SystemMessage {
     return isMessage(x) && x.role === 'system'
 }
 
@@ -58,7 +58,7 @@ export function isSystemMessage(x: any): x is SystemMessage {
  * @param x The object to validate.
  * @returns True if it is a valid UserMessage representation, false otherwise.
  */
-export function isUserMessage(x: any): x is UserMessage {
+export function isUserMessage(x: unknown): x is UserMessage {
     return isMessage(x) && x.role === 'user'
 }
 
@@ -68,7 +68,7 @@ export function isUserMessage(x: any): x is UserMessage {
  * @param x The object to validate.
  * @returns True if it is a valid AssistantMessage representation, false otherwise.
  */
-export function isAssistantMessage(x: any): x is AssistantMessage {
+export function isAssistantMessage(x: unknown): x is AssistantMessage {
     return isMessage(x) && x.role === 'assistant'
 }
 
@@ -108,15 +108,14 @@ export function isToolCallObj(x: unknown): x is ToolCallObj {
 /**
  * Checks if a given object represents a valid ToolResultMessage structure.
  *
- * @param {any} x The object to validate.
- * @returns {boolean} True if it is a valid ToolResultMessage representation, false otherwise.
+ * @param x The object to validate.
+ * @returns True if it is a valid ToolResultMessage representation, false otherwise.
  */
-export function isToolResultMessage(x: any): x is ToolResultMessage {
+export function isToolResultMessage(x: unknown): x is ToolResultMessage {
     if (!isMessage(x) || x.role !== 'tool') {
         return false
     }
-    // @ts-ignore
-    return isStr(x.tool_call_id)
+    return hasProp(x, 'tool_call_id') && isStr(x.tool_call_id)
 }
 
 export function isSupportedMessage(x: unknown): x is SupportedMessage {

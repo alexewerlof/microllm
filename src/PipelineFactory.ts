@@ -51,6 +51,7 @@ export async function getDevice(): Promise<'webgpu' | 'wasm' | 'cpu'> {
         return 'cpu'
     }
     try {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const adapter = await (navigator as any)?.gpu?.requestAdapter()
         return adapter ? 'webgpu' : 'wasm'
     } catch {

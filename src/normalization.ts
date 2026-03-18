@@ -35,7 +35,7 @@ export function mergeMessages(messageArr: Message[]): Message[] {
     const targetRoles = ['user', 'system']
     const ret: Message[] = []
     for (const message of messageArr) {
-        let lastMessage = ret[ret.length - 1]
+        const lastMessage = ret[ret.length - 1]
         const { role } = message
         if (targetRoles.includes(role) && role === lastMessage?.role) {
             ret.pop()

@@ -1,4 +1,4 @@
-import { inRange, isArr, isArrLen, isInt, isPOJO } from 'jty'
+import { inRange, isArr, isInt } from 'jty'
 
 /**
  * Calculates cosine similarity between two vectors.
