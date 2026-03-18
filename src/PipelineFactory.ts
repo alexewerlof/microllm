@@ -18,8 +18,6 @@ import { pipelineProgressConsoleReporter } from './utilities/download.js'
  * env.localModelPath = "/huggingface";
  */
 
-
-
 /**
  * Shared ONNX runtime configuration.
  * Detects the execution environment and configures the appropriate backend:
@@ -28,7 +26,7 @@ import { pipelineProgressConsoleReporter } from './utilities/download.js'
  *
  * All downstream modules (model.js, Embedder.js) import from here
  * so environment setup runs exactly once.
- * 
+ *
  * Returns the best available compute device for the current environment.
  * Node.js always uses CPU. Browsers prefer WebGPU with WASM fallback.
  * @returns {Promise<string>} "webgpu" or "wasm" for browsers, "cpu" for Node.js

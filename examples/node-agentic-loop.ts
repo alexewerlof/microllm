@@ -49,7 +49,7 @@ async function main() {
             break
         }
         messages.push(...resultMessages, createUserMessage('Call the function again.'))
-    // eslint-disable-next-line no-constant-condition
+        // eslint-disable-next-line no-constant-condition
     } while (true)
 }
 

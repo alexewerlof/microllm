@@ -84,7 +84,7 @@ async function main() {
         })
         console.log()
         messages.push(response)
-    // eslint-disable-next-line no-constant-condition
+        // eslint-disable-next-line no-constant-condition
     } while (true)
 
     process.stdin.destroy()

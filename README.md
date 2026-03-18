@@ -15,13 +15,17 @@ MicroLLM is a lightweight, bare-bones library designed to run Small Language Mod
 ## Notable Features
 
 ### MicroChat
+
 Engage in conversations with an instruct model, enabling dynamic and interactive AI-driven dialogues.
 
 ### MicroAgent
+
 Leverage tool-calling capabilities to extend the functionality of your AI workflows.
 
 ### MicroRAG
+
 Implement Retrieval-Augmented Generation (RAG) with ease using:
+
 - Header-based chunking
 - MicroEmbedder for embeddings
 - In-memory VectorStore for efficient retrieval
@@ -32,9 +36,9 @@ Implement Retrieval-Augmented Generation (RAG) with ease using:
 - **Learn AI Systems Engineering**: Master the art of creating small language models that can interact with each other.
 - **Privacy and Experimentation**: Like `MicroK8s` compared to full-blown `Kubernetes`, MicroLLM offers small, performant models that enable experimentation without the cost or privacy concerns of sending data to AI vendors.
 - **Production-Ready**: MIT licensed, making it perfect for shipping to production for simple tasks like:
-  - [AI Firewall](https://blog.alexewerlof.com/p/ai-firewall)
-  - Agentic workloads
-  - Client-side FAQs
+    - [AI Firewall](https://blog.alexewerlof.com/p/ai-firewall)
+    - Agentic workloads
+    - Client-side FAQs
 
 ## Implementation Details
 
@@ -60,6 +64,7 @@ npm i microllm onnxruntime-node
 ## Usage
 
 Explore the [examples](examples/) directory to see MicroLLM in action:
+
 - Node.js implementations
 - Browser-based demos
 - Retrieval-Augmented Generation (RAG)
@@ -68,7 +73,7 @@ Explore the [examples](examples/) directory to see MicroLLM in action:
 Run the node examples using `tsx` for example:
 
 ```bash
-node --loader tsx examples/node-rag.ts 
+node --loader tsx examples/node-rag.ts
 ```
 
 There's also a [web chat demo](examples/web/chat/index.html). Note that `wasm` is very slow and even if you do have `webgpu`, it might still be using a software fallback. You can check your browser's [Web GPU support](https://webgpureport.org/) and look at the detected `architecture`:
@@ -85,10 +90,10 @@ Some browsers may still return a broader label or an empty string.
 
 In Chrome on Linux, you need to enable the following flags to use the native GPU:
 
-* chrome://flags/#enable-unsafe-webgpu
-* chrome://flags/#enable-vulkan
-* chrome://flags/#default-angle-vulkan
-* chrome://flags/#vulkan-from-angle
+- chrome://flags/#enable-unsafe-webgpu
+- chrome://flags/#enable-vulkan
+- chrome://flags/#default-angle-vulkan
+- chrome://flags/#vulkan-from-angle
 
 ## Contributing
 

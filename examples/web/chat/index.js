@@ -7,14 +7,13 @@ const progressBars = new Map()
 
 function getProgressIndicator(file) {
     if (!progressBars.has(file)) {
-        const progressBar = jj.JJHE.create('progress').setAttr({
-            min: 0,
-            max: 100
-        }).setValue(0)
-        const container = jj.JJHE.create('div').addChild(
-            jj.JJHE.create('h3').setText(file),
-            progressBar,
-        )
+        const progressBar = jj.JJHE.create('progress')
+            .setAttr({
+                min: 0,
+                max: 100,
+            })
+            .setValue(0)
+        const container = jj.JJHE.create('div').addChild(jj.JJHE.create('h3').setText(file), progressBar)
         status.addChild(container)
         progressBars.set(file, progressBar)
     }
@@ -32,7 +31,6 @@ const pipelineFactory = new PipelineFactory('text-generation', 'onnx-community/L
         console.log(progressInfo.file, progressInfo.progress)
     },
 })
-
 
 jj.doc.find('#initializeModel').on('click', async () => {
     try {
