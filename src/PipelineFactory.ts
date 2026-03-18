@@ -18,6 +18,8 @@ import { pipelineProgressConsoleReporter } from './utilities/download.js'
  * env.localModelPath = "/huggingface";
  */
 
+
+
 /**
  * Shared ONNX runtime configuration.
  * Detects the execution environment and configures the appropriate backend:
@@ -26,30 +28,23 @@ import { pipelineProgressConsoleReporter } from './utilities/download.js'
  *
  * All downstream modules (model.js, Embedder.js) import from here
  * so environment setup runs exactly once.
- */
-const isNode = hasPath(process, 'versions', 'node')
-if (isNode) {
-    console.debug('Running in Node.js environment, configuring ONNX Runtime for Node')
-} else {
-    console.debug('Running in browser environment, using built-in ONNX Runtime with WebGPU/WASM backends')
-}
-if (isNode) {
-    // Dynamic import prevents bundlers from resolving onnxruntime-node in browser builds.
-    // Using a variable defeats static analysis for bundlers like esbuild.
-    const ort = await import('onnxruntime-node')
-    env.backends.onnx.runtime = ort.default ?? ort
-    env.cacheDir = './.cache'
-}
-
-/**
+ * 
  * Returns the best available compute device for the current environment.
  * Node.js always uses CPU. Browsers prefer WebGPU with WASM fallback.
  * @returns {Promise<string>} "webgpu" or "wasm" for browsers, "cpu" for Node.js
  */
-export async function getDevice(): Promise<'webgpu' | 'wasm' | 'cpu'> {
-    if (isNode) {
+async function getDevice(): Promise<'webgpu' | 'wasm' | 'cpu'> {
+    if (hasPath(globalThis, 'process', 'versions', 'node')) {
+        console.debug('Running in Node.js environment, configuring ONNX Runtime for Node')
+        // Dynamic import prevents bundlers from resolving onnxruntime-node in browser builds.
+        // Using a variable defeats static analysis for bundlers like esbuild.
+        const ort = await import('onnxruntime-node')
+        env.backends.onnx.runtime = ort.default ?? ort
+        env.cacheDir = './.cache'
         return 'cpu'
     }
+
+    console.debug('Running in browser environment, using built-in ONNX Runtime with WebGPU/WASM backends')
     try {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const adapter = await (navigator as any)?.gpu?.requestAdapter()

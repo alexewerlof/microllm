@@ -75,6 +75,7 @@ function decodeAssistantText(
 
 /**
  * Decodes the prompt input IDs into the exact plain-text sequence sent to generation.
+ * It is primarily used for debugging to see what we're sending to the model.
  *
  * @param tokenizer The tokenizer instance with batch_decode support.
  * @param promptInputIds The prompt token IDs from apply_chat_template().
@@ -83,14 +84,15 @@ function decodeAssistantText(
  *
  * @example
  * ```ts
- * const prompt = decodePromptText(tokenizer, inputIds, false)
+ * _printDecodePromptText(tokenizer, inputIds, false)
  * ```
  */
-function decodePromptText(
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+function _printDecodePromptText(
     tokenizer: { batch_decode: (batch: Tensor, decode_args?: Record<string, unknown>) => string[] },
     promptInputIds: Tensor,
     skipSpecialTokens: boolean,
-): string {
+): void {
     const decodeArgs = skipSpecialTokens ? { skip_special_tokens: true } : {}
     const decodedPrompts = tokenizer.batch_decode(promptInputIds, decodeArgs)
 
@@ -98,7 +100,9 @@ function decodePromptText(
         throw new TypeError('Expected decoded prompt text array from tokenizer.batch_decode().')
     }
 
-    return decodedPrompts[0]
+    const promptTextWithSpecialTokens = decodedPrompts[0]
+
+    console.debug(promptTextWithSpecialTokens)
 }
 
 export class MicroChat {
@@ -202,13 +206,7 @@ export class MicroChat {
             return_dict: true,
         }) as Record<string, unknown>
 
-        const promptTextWithSpecialTokens = decodePromptText(
-            pipelineInstance.tokenizer,
-            inputs.input_ids as Tensor,
-            false,
-        )
-
-        console.debug(promptTextWithSpecialTokens)
+        // _printDecodePromptText(pipelineInstance.tokenizer, inputs.input_ids as Tensor, false)
 
         const outputTokenIds = await pipelineInstance.model.generate({
             ...inputs,

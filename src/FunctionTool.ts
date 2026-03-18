@@ -315,9 +315,8 @@ export class FunctionTool {
     /**
      * Sets the `this` context to be used when the tool's function is invoked.
      *
-     * Note: The original implementation exposed a method named `this`. To preserve
-     * runtime compatibility we define it as a computed property name so callers that
-     * access the property via bracket-notation (e.g. tool['this'](...)) will continue to work.
+     * Note: To preserve runtime compatibility we define it as a computed property name so callers that
+     * access the property via bracket-notation (e.g. `tool['this'](...)`) will continue to work.
      *
      * @param thisArg The object to use as the `this` context.
      * @returns The tool instance for chaining.

@@ -1,4 +1,6 @@
-# MicroLLM: Minimalistic Small Language Model Library for JavaScript
+# MicroLLM
+
+**Minimalistic Small Language Model Library for JavaScript**
 
 MicroLLM is a lightweight, bare-bones library designed to run Small Language Models (SLMs) effortlessly in JavaScript. Whether you're working in Node.js (CPU) or the browser (WASM, WebGPU), MicroLLM provides a unified codebase to power your AI applications.
 
@@ -57,11 +59,17 @@ Explore the [examples](examples/) directory to see MicroLLM in action:
 - Retrieval-Augmented Generation (RAG)
 - Tool calling and more!
 
-## 🛠️ Contributing
+Run the node examples using `tsx` for example:
+
+```bash
+node --loader tsx examples/node-rag.ts 
+```
+
+## Contributing
 
 We welcome contributions! Feel free to submit issues, feature requests, or pull requests to help improve MicroLLM.
 
-## 📜 License
+## License
 
 This project is licensed under the MIT License.
 

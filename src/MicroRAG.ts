@@ -16,8 +16,7 @@ export class MicroRAG extends VectorStore {
      * Initializes a new RAG instance.
      *
      * @param embedder - Initialized embedder instance used to convert text to vectors.
-     * @param vectorStore - Vector store for document storage and search.
-     * @throws {TypeError} If embedder or vectorStore are not instances of their respective classes.
+     * @throws {TypeError} If embedder is not an instance of MicroEmbedder.
      */
     constructor(embedder: MicroEmbedder) {
         if (!isA(embedder, MicroEmbedder)) {
