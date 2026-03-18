@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="index.css">
+    <title>MicroLLM - Chat</title>
+</head>
+<body>
+    <div id="status">
+        <button id="initializeModel">Initialize</button>
+    </div>
+    <div id="chatUI" hidden>
+        <div id="chatThread"></div>
+        <textarea id="prompt" rows="4" cols="50" placeholder="Type something and press enter..."></textarea><br>
+        <button id="sendPrompt">Send</button>
+    </div>
+    <script type="importmap">
+    {
+        "imports": {
+            "micro-llm": "../../../lib/bundle.browser.js",
+            "jj": "../../../node_modules/jj/lib/bundle.js"
+        }
+    }
+    </script>
+    <script type="module" src="index.js"></script>
+</body>
+</html>

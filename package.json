@@ -2,7 +2,10 @@
     "name": "microllm",
     "description": "A minimalistic library to run Small Language Models (SLMs) in JavaScript, supporting Node.js and browsers.",
     "version": "0.1.0",
-    "main": "./lib/index.js",
+    "main": "./lib/bundle.cjs",
+    "module": "./lib/bundle.js",
+    "types": "./lib/bundle.d.ts",
+    "browser": "./lib/bundle.browser.js",
     "type": "module",
     "directories": {
         "lib": "lib",
@@ -14,8 +17,13 @@
         "README.md"
     ],
     "exports": {
-        "import": "./lib/index.js",
-        "require": "./lib/index.cjs"
+        ".": {
+            "types": "./lib/bundle.d.ts",
+            "browser": "./lib/bundle.browser.js",
+            "import": "./lib/bundle.js",
+            "require": "./lib/bundle.cjs",
+            "default": "./lib/bundle.js"
+        }
     },
     "scripts": {
         "fmt": "prettier --write .",
@@ -45,8 +53,15 @@
     ],
     "dependencies": {
         "@huggingface/transformers": "^3.8.1",
-        "jty": "^5.1.0",
+        "jty": "^5.1.0"
+    },
+    "peerDependencies": {
         "onnxruntime-node": "^1.21.0"
+    },
+    "peerDependenciesMeta": {
+        "onnxruntime-node": {
+            "optional": true
+        }
     },
     "devDependencies": {
         "@eslint/js": "^10.0.1",
@@ -56,6 +71,8 @@
         "eslint": "^10.0.3",
         "globals": "^17.4.0",
         "jiti": "^2.6.1",
+        "jj": "^2.8.0",
+        "onnxruntime-node": "^1.21.0",
         "prettier": "^3.8.1",
         "tsup": "^8.5.1",
         "tsx": "^4.21.0",

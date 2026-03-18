@@ -36,10 +36,16 @@ import { pipelineProgressConsoleReporter } from './utilities/download.js'
 async function getDevice(): Promise<'webgpu' | 'wasm' | 'cpu'> {
     if (hasPath(globalThis, 'process', 'versions', 'node')) {
         console.debug('Running in Node.js environment, configuring ONNX Runtime for Node')
-        // Dynamic import prevents bundlers from resolving onnxruntime-node in browser builds.
-        // Using a variable defeats static analysis for bundlers like esbuild.
-        const ort = await import('onnxruntime-node')
-        env.backends.onnx.runtime = ort.default ?? ort
+        try {
+            // Dynamic import prevents bundlers from resolving onnxruntime-node in browser builds.
+            const ort = await import('onnxruntime-node')
+            env.backends.onnx.runtime = ort.default ?? ort
+        } catch (error) {
+            throw new Error(
+                'Node.js usage requires the optional peer dependency "onnxruntime-node". Install it with "npm i onnxruntime-node".',
+                { cause: error },
+            )
+        }
         env.cacheDir = './.cache'
         return 'cpu'
     }

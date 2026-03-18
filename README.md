@@ -51,6 +51,12 @@ Install MicroLLM via npm:
 npm i microllm
 ```
 
+If you are running MicroLLM in Node.js, install the optional ONNX runtime as well:
+
+```bash
+npm i microllm onnxruntime-node
+```
+
 ## Usage
 
 Explore the [examples](examples/) directory to see MicroLLM in action:
@@ -64,6 +70,25 @@ Run the node examples using `tsx` for example:
 ```bash
 node --loader tsx examples/node-rag.ts 
 ```
+
+There's also a [web chat demo](examples/web/chat/index.html). Note that `wasm` is very slow and even if you do have `webgpu`, it might still be using a software fallback. You can check your browser's [Web GPU support](https://webgpureport.org/) and look at the detected `architecture`:
+
+- Apple / Metal: `common-X` or `metal-X`
+- AMD: `rdna-X`, `gcn-X`, `cdna-X`, or on older hardware `terascale-X`
+- NVIDIA: `turing`, `ampere`, `lovelace`, `blackwell`, `pascal`, `maxwell`, or `kepler`
+- Intel: `gen-X` or `xe-*`
+- Software Emulated GPU: `swiftshader` (this is very slow)
+
+Some browsers may still return a broader label or an empty string.
+
+### Usage in Chrome on Linux
+
+In Chrome on Linux, you need to enable the following flags to use the native GPU:
+
+* chrome://flags/#enable-unsafe-webgpu
+* chrome://flags/#enable-vulkan
+* chrome://flags/#default-angle-vulkan
+* chrome://flags/#vulkan-from-angle
 
 ## Contributing
 
