@@ -71,8 +71,8 @@ We welcome contributions! Feel free to submit issues, feature requests, or pull 
 
 ## License
 
-This project is licensed under the MIT License.
+[MIT](./LICENSE)
 
 ---
 
-🇸🇪 Made in Sweden by [Alex Ewerlof](https://alexewerlof.com)
+🇸🇪 _Made in Sweden by [Alex Ewerlof](https://alexewerlof.com)_
