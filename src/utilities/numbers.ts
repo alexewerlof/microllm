@@ -1,4 +1,4 @@
-import { isNum } from "jty"
+import { isNum } from 'jty'
 
 /**
  * Clamps a number between a minimum and maximum value.

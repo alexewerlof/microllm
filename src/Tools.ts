@@ -30,7 +30,10 @@ export class Tools {
         } = toolCallObj
         console.debug(`Agent wants to call ${name}(${argsStr})`)
         const tool = this.tools.find((tool) => tool.name === name)
-        return createToolResultMessage(id, tool ? await tool.invoke(argsStr): `Error: No tool found with the name "${name}"`)
+        return createToolResultMessage(
+            id,
+            tool ? await tool.invoke(argsStr) : `Error: No tool found with the name "${name}"`,
+        )
     }
 
     async exeToolCalls(toolsCallMessage: ToolCallsMessage): Promise<ToolResultMessage[]> {
@@ -45,7 +48,7 @@ export class Tools {
     toJSON(): FunctionToolDeclaration[] {
         // Ensure unique tool names
         const toolNames = new Set<string>()
-        for (const name of this.tools.map(({name}) => name)) {
+        for (const name of this.tools.map(({ name }) => name)) {
             if (toolNames.has(name)) {
                 throw new RangeError(`Duplicate tool names: ${name}`)
             }

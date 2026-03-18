@@ -1,5 +1,12 @@
-import { isToolCallObj } from './guards'
-import { AssistantMessage, SystemMessage, ToolCallObj, ToolCallsMessage, ToolResultMessage, UserMessage } from './types'
+import { isToolCallObj } from './guards.js'
+import {
+    AssistantMessage,
+    SystemMessage,
+    ToolCallObj,
+    ToolCallsMessage,
+    ToolResultMessage,
+    UserMessage,
+} from './types.js'
 
 export function createSystemMessage(content: string): SystemMessage {
     return {
@@ -49,4 +56,3 @@ export function createToolResultMessage(toolCallId: string, content: string): To
         content,
     }
 }
-

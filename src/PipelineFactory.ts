@@ -58,7 +58,11 @@ export async function getDevice(): Promise<'webgpu' | 'wasm' | 'cpu'> {
     }
 }
 
-export async function createPipeline<TTask extends PipelineType>(task: TTask, model: string, options: PretrainedModelOptions = {}) {
+export async function createPipeline<TTask extends PipelineType>(
+    task: TTask,
+    model: string,
+    options: PretrainedModelOptions = {},
+) {
     const device = await getDevice()
     console.debug(`Creating pipeline for task ${task} and model ${model} on device ${device}`)
     return await pipeline(task, model, {

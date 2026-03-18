@@ -1,17 +1,17 @@
-import { isStr, isPOJO, isDef } from 'jty'
+import { isStr } from 'jty'
 
 export interface DocumentChunkMetadata {
-    title: string;
-    level: number;
-    id: number;
-    parent?: number;
-    children?: number[];
-    [key: string]: any;
-};
+    title: string
+    level: number
+    id: number
+    parent?: number
+    children?: number[]
+    [key: string]: any
+}
 
 export interface DocumentChunk {
-    content: string;
-    metadata: DocumentChunkMetadata;
+    content: string
+    metadata: DocumentChunkMetadata
 }
 
 interface Section {
@@ -162,7 +162,7 @@ function assignBreadcrumbs(sections: Section[]): Map<number, string> {
         }
 
         const headerLines = [
-            ...stack.map(s => toHeaderLine(s.level, s.title)),
+            ...stack.map((s) => toHeaderLine(s.level, s.title)),
             toHeaderLine(section.level, section.title),
         ]
         breadcrumbs.set(section.id, headerLines.join('\n'))
@@ -231,11 +231,18 @@ export function headerChunk(markdown: string): DocumentChunk[] {
     const breadcrumbs = assignBreadcrumbs(sections)
 
     return sections
-        .filter(s => s.contentLines.join('\n').trim().length > 0)
-        .map(s => {
+        .filter((s) => s.contentLines.join('\n').trim().length > 0)
+        .map((s) => {
             const chunk = sectionToChunk(s)
             return { ...chunk, content: breadcrumbs.get(s.id)! + '\n' + chunk.content }
         })
 }
 
-export const _test = { parseHeaderLine, splitIntoSections, assignChildren, toHeaderLine, assignBreadcrumbs, sectionToChunk }
+export const _test = {
+    parseHeaderLine,
+    splitIntoSections,
+    assignChildren,
+    toHeaderLine,
+    assignBreadcrumbs,
+    sectionToChunk,
+}

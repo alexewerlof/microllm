@@ -103,7 +103,7 @@ export function isFunctionToolPropertiesMap(obj: unknown): obj is FunctionToolPr
         return false
     }
 
-    if (hasProp(obj, 'items') && !isStr((obj.items))) {
+    if (hasProp(obj, 'items') && !isStr(obj.items)) {
         return false
     }
     return true
@@ -152,11 +152,11 @@ export function isFunctionToolFunctionDeclaration(obj: unknown): obj is Function
         return false
     }
 
-    if(isDef(parameters) && !isFunctionToolPropertiesMap(parameters.properties)) {
+    if (isDef(parameters) && !isFunctionToolPropertiesMap(parameters.properties)) {
         return false
     }
 
-    if(isDef(parameters) && !isFunctionToolPropertiesMap(parameters.properties)) {
+    if (isDef(parameters) && !isFunctionToolPropertiesMap(parameters.properties)) {
         return false
     }
 

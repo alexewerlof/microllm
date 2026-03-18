@@ -1,10 +1,9 @@
 {
-	"servers": {
-		"liquid-ai": {
-			"url": "https://docs.liquid.ai/mcp",
-			"type": "http"
-		}
-		
-	},
-	"inputs": []
+    "servers": {
+        "liquid-ai": {
+            "url": "https://docs.liquid.ai/mcp",
+            "type": "http"
+        }
+    },
+    "inputs": []
 }

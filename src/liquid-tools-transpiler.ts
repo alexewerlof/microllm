@@ -1,8 +1,8 @@
-import { isArr, isDef, isPOJO, isStr } from "jty"
-import { AssistantMessage, SupportedMessage, ToolCallObj, ToolCallsMessage } from "./Message/types"
-import { isAssistantMessage, isMessage, isSupportedMessage, isSupportedMessageArr, isToolCallObj, isToolCallsMessage } from "./Message/guards"
-import { Message } from "@huggingface/transformers"
-import { createAssistantMessage, createSystemMessage, createToolResultMessage, createUserMessage } from "./Message/factories"
+import { isArr, isDef, isPOJO, isStr } from 'jty'
+import { AssistantMessage, SupportedMessage, ToolCallObj, ToolCallsMessage } from './Message/types.js'
+import { isSupportedMessage, isToolCallObj, isToolCallsMessage } from './Message/guards.js'
+import { Message } from '@huggingface/transformers'
+import { createAssistantMessage } from './Message/factories.js'
 
 const TOOL_CALL_START_TOKEN = '<|tool_call_start|>'
 const TOOL_CALL_END_TOKEN = '<|tool_call_end|>'
@@ -53,7 +53,6 @@ export function parsePythonToolCallObj(text: string): ToolCallObj[] {
     const [, functionName, argsStr] = match
 
     const PYTHON_TO_JS: Record<string, boolean | null> = { True: true, False: false, None: null }
-
 
     const args: Record<string, unknown> = {}
     if (argsStr.trim().length > 0) {

@@ -1,8 +1,8 @@
 import { isA, isArr } from 'jty'
-import { Tools } from './Tools'
-import { MicroChat } from './MicroChat'
-import { SupportedMessage } from './Message/types'
-import { isAssistantMessage, isToolCallsMessage } from './Message/guards'
+import { Tools } from './Tools.js'
+import { MicroChat } from './MicroChat.js'
+import { SupportedMessage } from './Message/types.js'
+import { isAssistantMessage, isToolCallsMessage } from './Message/guards.js'
 
 /**
  * Orchestrates the agentic loop between a MicroChat and a set of Tools.
@@ -21,7 +21,7 @@ import { isAssistantMessage, isToolCallsMessage } from './Message/guards'
  * const result = await agent.work(messages, tools)
  * // result is the mutated messages array with tool calls and final answer appended
  * ```
-*/
+ */
 export class MicroAgent {
     /** Maximum number of consecutive tool calls before throwing. */
     static MAX_TOOL_CALLS = 10
@@ -34,7 +34,9 @@ export class MicroAgent {
      */
     constructor(microChat: MicroChat) {
         if (!isA(microChat, MicroChat)) {
-            throw new TypeError(`Expected microChat to be an instance of MicroChat. Got ${microChat} (${typeof microChat})`)
+            throw new TypeError(
+                `Expected microChat to be an instance of MicroChat. Got ${microChat} (${typeof microChat})`,
+            )
         }
         this.#microChat = microChat
     }
@@ -91,7 +93,9 @@ export class MicroAgent {
             }
 
             if (!isAssistantMessage(result)) {
-                throw new TypeError(`Expected assistant response from llm.complete(), but got ${JSON.stringify(result)}`)
+                throw new TypeError(
+                    `Expected assistant response from llm.complete(), but got ${JSON.stringify(result)}`,
+                )
             }
 
             ret.push(result)

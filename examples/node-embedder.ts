@@ -1,6 +1,6 @@
-import { MicroEmbedder } from "../src/MicroEmbedder";
-import { PipelineFactory } from "../src/PipelineFactory";
-import { createProgressCallback } from "./progress-callback";
+import { MicroEmbedder } from '../src/MicroEmbedder'
+import { PipelineFactory } from '../src/PipelineFactory'
+import { createProgressCallback } from './progress-callback'
 
 async function main() {
     const pipelineFactory = new PipelineFactory('feature-extraction', 'Xenova/all-MiniLM-L6-v2', {
@@ -9,11 +9,7 @@ async function main() {
     })
 
     const microEmbedder = new MicroEmbedder(pipelineFactory)
-    const sentences = [
-        "Hello, how are you?",
-        "What is the capital of France?",
-        "I love machine learning."
-    ]
+    const sentences = ['Hello, how are you?', 'What is the capital of France?', 'I love machine learning.']
 
     async function printEmbedding(text: string) {
         const embedding = await microEmbedder.embed(text)
@@ -23,7 +19,7 @@ async function main() {
     console.log('All embeddings generated.')
 }
 
-main().catch(error => {
+main().catch((error) => {
     console.error('An error occurred:', error)
     process.exit(1)
 })

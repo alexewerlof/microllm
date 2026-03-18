@@ -1,9 +1,9 @@
 import assert from 'node:assert/strict'
 import { describe, test } from 'node:test'
-import { MicroChat } from './MicroChat'
-import { PipelineFactory } from './PipelineFactory'
-import { SupportedMessage } from './Message/types'
-import { Tools } from './Tools'
+import { MicroChat } from './MicroChat.js'
+import { PipelineFactory } from './PipelineFactory.js'
+import { SupportedMessage } from './Message/types.js'
+import { Tools } from './Tools.js'
 
 describe('MicroChat', () => {
     test('uses tokenizer chat templating with tools when native support is available', async () => {
@@ -22,32 +22,33 @@ describe('MicroChat', () => {
         let capturedMessages: unknown[] | undefined
         let capturedTemplateOptions: Record<string, unknown> | undefined
 
-        llm.pipelineFactory.getPipeline = async () => ({
-            tokenizer: {
-                apply_chat_template(conversation: unknown[], options: Record<string, unknown>) {
-                    capturedMessages = conversation
-                    capturedTemplateOptions = options
-                    return {
-                        input_ids: inputIds,
-                        attention_mask: [[1, 1, 1]],
-                    }
+        llm.pipelineFactory.getPipeline = async () =>
+            ({
+                tokenizer: {
+                    apply_chat_template(conversation: unknown[], options: Record<string, unknown>) {
+                        capturedMessages = conversation
+                        capturedTemplateOptions = options
+                        return {
+                            input_ids: inputIds,
+                            attention_mask: [[1, 1, 1]],
+                        }
+                    },
+                    batch_decode(tokenIds: unknown, options: Record<string, unknown> = {}) {
+                        if (tokenIds === inputIds) {
+                            return ['prompt']
+                        }
+                        if (options.skip_special_tokens) {
+                            return ['prompt[get_time()]']
+                        }
+                        return ['prompt<|tool_call_start|>[get_time()]<|tool_call_end|>']
+                    },
                 },
-                batch_decode(tokenIds: unknown, options: Record<string, unknown> = {}) {
-                    if (tokenIds === inputIds) {
-                        return ['prompt']
-                    }
-                    if (options.skip_special_tokens) {
-                        return ['prompt[get_time()]']
-                    }
-                    return ['prompt<|tool_call_start|>[get_time()]<|tool_call_end|>']
+                model: {
+                    async generate() {
+                        return outputIds
+                    },
                 },
-            },
-            model: {
-                async generate() {
-                    return outputIds
-                },
-            },
-        } as any)
+            }) as any
 
         const result = await llm.complete({ messages, tools })
 
@@ -56,70 +57,13 @@ describe('MicroChat', () => {
         assert.deepStrictEqual(capturedTemplateOptions.tools, tools.toJSON())
         assert.strictEqual(capturedTemplateOptions.add_generation_prompt, true)
         assert.strictEqual(
-            capturedMessages.some((message: any) => message.role === 'system' && String(message.content).includes('List of tools:')),
+            capturedMessages.some(
+                (message: any) => message.role === 'system' && String(message.content).includes('List of tools:'),
+            ),
             false,
         )
         assert.strictEqual(result.role, 'assistant')
         assert.ok('tool_calls' in result)
         assert.strictEqual(result.tool_calls[0].function.name, 'get_time')
-    })
-
-    test('logs the decoded prompt text with special tokens before generation', async () => {
-        const factory = new PipelineFactory('text-generation', 'test-model')
-        const llm = new MicroChat(factory)
-
-        const messages: SupportedMessage[] = [
-            { role: 'user', content: 'What time is it?' },
-        ]
-
-        const inputIds = [[1, 2, 3]]
-        const outputIds = [[1, 2, 3, 4]]
-        const loggedEntries: unknown[] = []
-        const originalConsoleDir = console.dir
-
-        llm.pipelineFactory.getPipeline = async () => ({
-            tokenizer: {
-                apply_chat_template() {
-                    return {
-                        input_ids: inputIds,
-                        attention_mask: [[1, 1, 1]],
-                    }
-                },
-                batch_decode(tokenIds: unknown, options: Record<string, unknown> = {}) {
-                    if (tokenIds === inputIds) {
-                        if (options.skip_special_tokens) {
-                            return ['user: What time is it?']
-                        }
-
-                        return ['<|system|>You are a helpful assistant.<|user|>What time is it?<|assistant|>']
-                    }
-
-                    return ['<|system|>You are a helpful assistant.<|user|>What time is it?<|assistant|>It is noon.']
-                },
-            },
-            model: {
-                async generate() {
-                    return outputIds
-                },
-            },
-        } as any)
-
-        console.dir = (value: unknown) => {
-            loggedEntries.push(value)
-        }
-
-        try {
-            await llm.complete({ messages })
-        } finally {
-            console.dir = originalConsoleDir
-        }
-
-        assert.deepStrictEqual(loggedEntries[0], {
-            promptTextWithSpecialTokens: '<|system|>You are a helpful assistant.<|user|>What time is it?<|assistant|>',
-            inputs: {
-                input_ids: inputIds,
-                attention_mask: [[1, 1, 1]],
-            },
-        })
     })
 })

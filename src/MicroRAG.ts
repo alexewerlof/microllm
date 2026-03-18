@@ -9,7 +9,7 @@ import { createSystemMessage } from './Message/factories.js'
  * Works in both Node.js and browser environments.
  * Handles chunking, embedding, and context retrieval.
  */
-export class MicroRAG extends VectorStore{
+export class MicroRAG extends VectorStore {
     #embedder: MicroEmbedder
 
     /**
@@ -21,7 +21,9 @@ export class MicroRAG extends VectorStore{
      */
     constructor(embedder: MicroEmbedder) {
         if (!isA(embedder, MicroEmbedder)) {
-            throw new TypeError(`Expected MicroEmbedder instance for embedder, but got ${embedder} (${typeof embedder})`)
+            throw new TypeError(
+                `Expected MicroEmbedder instance for embedder, but got ${embedder} (${typeof embedder})`,
+            )
         }
         super()
         this.#embedder = embedder
@@ -45,7 +47,7 @@ export class MicroRAG extends VectorStore{
         const chunks = headerChunk(text)
         for (const { content, metadata } of chunks) {
             const embedding = await this.#embedder.embed(content)
-            this.addRecord(content, embedding, {...docMetadata, ...metadata})
+            this.addRecord(content, embedding, { ...docMetadata, ...metadata })
         }
         return chunks.length
     }
@@ -105,7 +107,7 @@ export class MicroRAG extends VectorStore{
         for (let i = 0; i < relevantContext.length; i++) {
             const { text, metadata } = relevantContext[i]
             const tagName = `document${i + 1}`
-            ragSystemPrompLines.push(`<${tagName} metadata=${JSON.stringify((metadata))}>\n${text}\n</${tagName}>`)
+            ragSystemPrompLines.push(`<${tagName} metadata=${JSON.stringify(metadata)}>\n${text}\n</${tagName}>`)
         }
         return createSystemMessage(ragSystemPrompLines.join('\n\n'))
     }

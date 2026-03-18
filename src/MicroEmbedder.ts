@@ -1,5 +1,5 @@
 import { FeatureExtractionPipelineOptions } from '@huggingface/transformers'
-import { PipelineFactory } from './PipelineFactory'
+import { PipelineFactory } from './PipelineFactory.js'
 
 /**
  * Generates embeddings using a caller-owned feature-extraction pipeline factory.
@@ -26,10 +26,13 @@ export class MicroEmbedder {
      * @param text - The input text to embed.
      * @returns The embedding vector.
      */
-    async embed(text: string, options: FeatureExtractionPipelineOptions = {
-        pooling: 'mean',
+    async embed(
+        text: string,
+        options: FeatureExtractionPipelineOptions = {
+            pooling: 'mean',
             normalize: true,
-    }): Promise<number[]> {
+        },
+    ): Promise<number[]> {
         const pipelineInstance = await this.pipelineFactory.getPipeline()
         const snippet = text.slice(0, 15)
         const logMsg = `Embed ${snippet}... (${text.length} chars)`

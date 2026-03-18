@@ -71,11 +71,7 @@ export class VectorStore {
      * @param maxResults - Maximum number of results to return.
      * @returns Array of objects containing text, metadata, and similarity score.
      */
-    getSimilarRecords(
-        queryEmbedding: number[],
-        minScore = 0.3,
-        maxResults = 0,
-    ): Array<VectorStoreQueryResult> {
+    getSimilarRecords(queryEmbedding: number[], minScore = 0.3, maxResults = 0): Array<VectorStoreQueryResult> {
         if (!isArr(queryEmbedding)) {
             throw new TypeError(
                 `Expected queryEmbedding to be an array, got ${queryEmbedding} (${typeof queryEmbedding})`,

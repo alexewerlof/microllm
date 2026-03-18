@@ -1,10 +1,10 @@
 import { describe, test } from 'node:test'
 import assert from 'node:assert/strict'
-import { _test, bytesToHumanReadable, numL10n, durL10n } from './format'
+import { _test, bytesToHumanReadable, numL10n, durL10n } from './format.js'
 
 const { millisecondsToDurationParts, formatDurationFallback } = _test
 
-function tableTest<T extends (...args: any[]) => any>(fn: T, cases: { input: Parameters<T>, output: ReturnType<T> }[]) {
+function tableTest<T extends (...args: any[]) => any>(fn: T, cases: { input: Parameters<T>; output: ReturnType<T> }[]) {
     for (const { input, output } of cases) {
         assert.strictEqual(fn(...input), output)
     }

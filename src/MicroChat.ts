@@ -1,12 +1,12 @@
-import { Message, StoppingCriteriaList, Tensor, TextGenerationConfig, TextStreamer } from "@huggingface/transformers"
-import { PipelineFactory } from "./PipelineFactory"
-import { isA, isArr, isDef, isObj, isPOJO, isStr } from "jty"
-import { normalizeMessageArray } from "./normalization"
-import { SignalStoppingCriteria } from "./SignalStoppingCriteria"
-import { Tools } from "./Tools"
-import { SupportedMessage } from "./Message/types"
-import { createAssistantMessage } from "./Message/factories"
-import { convertSupportedMessagesToLiquidMessages, tryParseToolCalls } from "./liquid-tools-transpiler"
+import { Message, StoppingCriteriaList, Tensor, TextGenerationConfig, TextStreamer } from '@huggingface/transformers'
+import { PipelineFactory } from './PipelineFactory.js'
+import { isA, isArr, isDef, isObj, isPOJO, isStr } from 'jty'
+import { normalizeMessageArray } from './normalization.js'
+import { SignalStoppingCriteria } from './SignalStoppingCriteria.js'
+import { Tools } from './Tools.js'
+import { SupportedMessage } from './Message/types.js'
+import { createAssistantMessage } from './Message/factories.js'
+import { convertSupportedMessagesToLiquidMessages, tryParseToolCalls } from './liquid-tools-transpiler.js'
 
 const defaultTextGenerationConfig: Partial<TextGenerationConfig> = {
     max_new_tokens: 512,
@@ -102,7 +102,7 @@ function decodePromptText(
 }
 
 export class MicroChat {
-    pipelineFactory: PipelineFactory<"text-generation">
+    pipelineFactory: PipelineFactory<'text-generation'>
 
     /**
      * Creates a chat instance from a pre-configured text generation pipeline factory.
@@ -149,13 +149,17 @@ export class MicroChat {
 
         if (isDef(tools)) {
             if (!isA(tools, Tools)) {
-                throw new TypeError(`Expected instance of Tools for tools, but got ${JSON.stringify(tools)} (${typeof tools})`)
+                throw new TypeError(
+                    `Expected instance of Tools for tools, but got ${JSON.stringify(tools)} (${typeof tools})`,
+                )
             }
         }
 
         if (isDef(config)) {
             if (!isPOJO(config)) {
-                throw new TypeError(`When specified, completion config should be an object. Got ${config} (${typeof config})`)
+                throw new TypeError(
+                    `When specified, completion config should be an object. Got ${config} (${typeof config})`,
+                )
             }
         }
 
@@ -165,7 +169,7 @@ export class MicroChat {
         }
 
         const stoppingCriteriaConfig: {
-            stopping_criteria?: StoppingCriteriaList,
+            stopping_criteria?: StoppingCriteriaList
         } = {}
         if (isDef(signal)) {
             if (signal.aborted) {
@@ -204,10 +208,7 @@ export class MicroChat {
             false,
         )
 
-        console.dir({
-            promptTextWithSpecialTokens,
-            inputs,
-        }, { depth: 3 })
+        console.debug(promptTextWithSpecialTokens)
 
         const outputTokenIds = await pipelineInstance.model.generate({
             ...inputs,
@@ -218,7 +219,10 @@ export class MicroChat {
 
         // First pass: decode preserving special tokens to detect tool calls
         const rawAssistantText = decodeAssistantText(
-            pipelineInstance.tokenizer, outputTokenIds as Tensor, inputs.input_ids as Tensor, false
+            pipelineInstance.tokenizer,
+            outputTokenIds as Tensor,
+            inputs.input_ids as Tensor,
+            false,
         )
 
         try {
@@ -230,10 +234,12 @@ export class MicroChat {
             // Malformed tool call tokens from model output — treat as plain text
         }
 
-
         // Second pass: decode stripping special tokens for clean text
         const cleanAssistantText = decodeAssistantText(
-            pipelineInstance.tokenizer, outputTokenIds as Tensor, inputs.input_ids as Tensor, true
+            pipelineInstance.tokenizer,
+            outputTokenIds as Tensor,
+            inputs.input_ids as Tensor,
+            true,
         )
 
         return createAssistantMessage(cleanAssistantText)

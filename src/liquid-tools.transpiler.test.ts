@@ -1,12 +1,11 @@
 import { describe, test } from 'node:test'
 import assert from 'node:assert/strict'
-import { Message } from '@huggingface/transformers'
 import {
     convertSupportedMessagesToLiquidMessages,
     parsePythonToolCallObj,
     stripToolCallTokens,
     tryParseToolCalls,
-} from './liquid-tools-transpiler'
+} from './liquid-tools-transpiler.js'
 
 describe(stripToolCallTokens.name, () => {
     test('removes the special tokens', () => {
@@ -84,7 +83,9 @@ describe(tryParseToolCalls.name, () => {
     })
 
     test('parses a tool call with surrounding text', () => {
-        const result = tryParseToolCalls('<|tool_call_start|>[search(query="hello")]<|tool_call_end|>\nSearching for hello.')
+        const result = tryParseToolCalls(
+            '<|tool_call_start|>[search(query="hello")]<|tool_call_end|>\nSearching for hello.',
+        )
         assert.notStrictEqual(result, null)
         assert.strictEqual(result!.tool_calls[0].function.name, 'search')
     })
@@ -98,17 +99,11 @@ describe(tryParseToolCalls.name, () => {
     })
 
     test('throws when start token is present but end token is missing', () => {
-        assert.throws(
-            () => tryParseToolCalls('<|tool_call_start|>[get_time()]'),
-            SyntaxError,
-        )
+        assert.throws(() => tryParseToolCalls('<|tool_call_start|>[get_time()]'), SyntaxError)
     })
 
     test('throws when brackets are missing inside tokens', () => {
-        assert.throws(
-            () => tryParseToolCalls('<|tool_call_start|>get_time()<|tool_call_end|>'),
-            SyntaxError,
-        )
+        assert.throws(() => tryParseToolCalls('<|tool_call_start|>get_time()<|tool_call_end|>'), SyntaxError)
     })
 
     test('parses a tool call with arguments', () => {
@@ -132,12 +127,12 @@ describe(convertSupportedMessagesToLiquidMessages.name, () => {
         const result = convertSupportedMessagesToLiquidMessages([
             {
                 role: 'assistant',
-                tool_calls: [
-                    { id: 'call_123', type: 'function', function: { name: 'get_time', arguments: '{}' } },
-                ],
+                tool_calls: [{ id: 'call_123', type: 'function', function: { name: 'get_time', arguments: '{}' } }],
             },
         ])
 
-        assert.deepStrictEqual(result, [{ role: 'assistant', content: '<|tool_call_start|>[get_time()]<|tool_call_end|>' }])
+        assert.deepStrictEqual(result, [
+            { role: 'assistant', content: '<|tool_call_start|>[get_time()]<|tool_call_end|>' },
+        ])
     })
 })

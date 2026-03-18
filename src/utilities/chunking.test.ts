@@ -254,13 +254,7 @@ describe(headerChunk.name, () => {
     })
 
     test('preserves multi-line content within a section', () => {
-        const md = [
-            '# Title',
-            'Line one.',
-            'Line two.',
-            '',
-            'Line three after blank.',
-        ].join('\n')
+        const md = ['# Title', 'Line one.', 'Line two.', '', 'Line three after blank.'].join('\n')
 
         const chunks = headerChunk(md)
 
@@ -315,10 +309,7 @@ describe(headerChunk.name, () => {
     })
 
     test('throws TypeError when markdown is not a string', () => {
-        assert.throws(
-            () => headerChunk(123 as any),
-            { name: 'TypeError', message: /Expected markdown to be a string/ },
-        )
+        assert.throws(() => headerChunk(123 as any), { name: 'TypeError', message: /Expected markdown to be a string/ })
     })
 
     test('handles real-world markdown with bullet lists', () => {
@@ -358,7 +349,13 @@ describe(headerChunk.name, () => {
         assert.strictEqual(chunks[0].content, '# Doc title\nIntro text')
         assert.strictEqual(chunks[1].content, '# Doc title\n## Concept 1\nDescription for concept 1.')
         assert.strictEqual(chunks[2].content, '# Doc title\n## Concept 2\nDescription for concept 2.')
-        assert.strictEqual(chunks[3].content, '# Doc title\n## Concept 2\n### Nuance on concept 2\nDescription for nuance on concept 2')
-        assert.strictEqual(chunks[4].content, '# Doc title\n## Concept 2\n### Example on concept 2\nExample for concept 2')
+        assert.strictEqual(
+            chunks[3].content,
+            '# Doc title\n## Concept 2\n### Nuance on concept 2\nDescription for nuance on concept 2',
+        )
+        assert.strictEqual(
+            chunks[4].content,
+            '# Doc title\n## Concept 2\n### Example on concept 2\nExample for concept 2',
+        )
     })
 })

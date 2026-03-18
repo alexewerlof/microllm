@@ -1,11 +1,11 @@
 import assert from 'node:assert/strict'
 import { describe, test } from 'node:test'
-import { MicroChat } from './MicroChat'
-import { MicroAgent } from './MicroAgent'
-import { Tools } from './Tools'
-import { SupportedMessage } from './Message/types'
+import { MicroChat } from './MicroChat.js'
+import { MicroAgent } from './MicroAgent.js'
+import { Tools } from './Tools.js'
+import { SupportedMessage } from './Message/types.js'
+import { PipelineFactory } from './PipelineFactory.js'
 import { Message } from '@huggingface/transformers'
-import { PipelineFactory } from './PipelineFactory'
 
 const MOCK_PROMPT_IDS = [[1, 2, 3]]
 const MOCK_OUTPUT_IDS = [[1, 2, 3, 4, 5, 6]]
@@ -28,9 +28,10 @@ function createMockPipeline(responses: string[]) {
                     return [MOCK_PROMPT_TEXT]
                 }
                 if (options.skip_special_tokens) {
-                    return [MOCK_PROMPT_TEXT + currentResponse
-                        .replaceAll('<|tool_call_start|>', '')
-                        .replaceAll('<|tool_call_end|>', '')]
+                    return [
+                        MOCK_PROMPT_TEXT +
+                            currentResponse.replaceAll('<|tool_call_start|>', '').replaceAll('<|tool_call_end|>', ''),
+                    ]
                 }
                 return [MOCK_PROMPT_TEXT + currentResponse]
             },
@@ -124,25 +125,26 @@ describe('MicroAgent', () => {
         const llm = new MicroChat(new PipelineFactory('text-generation', 'test-model'))
         let capturedMessages: Message[] | undefined
 
-        llm.pipelineFactory.getPipeline = async () => ({
-            tokenizer: {
-                apply_chat_template(messages: Message[]) {
-                    capturedMessages = messages
-                    return { input_ids: MOCK_PROMPT_IDS, attention_mask: [[1, 1, 1]] }
+        llm.pipelineFactory.getPipeline = async () =>
+            ({
+                tokenizer: {
+                    apply_chat_template(messages: Message[]) {
+                        capturedMessages = messages
+                        return { input_ids: MOCK_PROMPT_IDS, attention_mask: [[1, 1, 1]] }
+                    },
+                    batch_decode(tokenIds: unknown) {
+                        if (tokenIds === MOCK_PROMPT_IDS) {
+                            return [MOCK_PROMPT_TEXT]
+                        }
+                        return [MOCK_PROMPT_TEXT + 'done']
+                    },
                 },
-                batch_decode(tokenIds: unknown) {
-                    if (tokenIds === MOCK_PROMPT_IDS) {
-                        return [MOCK_PROMPT_TEXT]
-                    }
-                    return [MOCK_PROMPT_TEXT + 'done']
+                model: {
+                    async generate() {
+                        return MOCK_OUTPUT_IDS
+                    },
                 },
-            },
-            model: {
-                async generate() {
-                    return MOCK_OUTPUT_IDS
-                },
-            },
-        } as any)
+            }) as any
 
         const tools = new Tools()
         tools.addTool('get_time', 'Get the current time').func = async () => 'noon'
@@ -152,9 +154,7 @@ describe('MicroAgent', () => {
             { role: 'user', content: 'What time is it?' },
             {
                 role: 'assistant',
-                tool_calls: [
-                    { id: 'call_123', type: 'function', function: { name: 'get_time', arguments: '{}' } },
-                ],
+                tool_calls: [{ id: 'call_123', type: 'function', function: { name: 'get_time', arguments: '{}' } }],
             },
             { role: 'tool', tool_call_id: 'call_123', content: 'noon' },
         ]
@@ -191,9 +191,8 @@ describe('MicroAgent', () => {
         const agent = new MicroAgent(llm)
         const messages: SupportedMessage[] = [{ role: 'user', content: 'What time is it?' }]
 
-        await assert.rejects(
-            () => agent.work(messages, tools),
-            { message: `Maximum consecutive tool calls exceeded (${MicroAgent.MAX_TOOL_CALLS}).` },
-        )
+        await assert.rejects(() => agent.work(messages, tools), {
+            message: `Maximum consecutive tool calls exceeded (${MicroAgent.MAX_TOOL_CALLS}).`,
+        })
     })
 })

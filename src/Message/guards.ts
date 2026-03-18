@@ -1,9 +1,18 @@
 import { hasProp, isArr, isArrLen, isObj, isStr } from 'jty'
-import { AssistantMessage, MessageRole, SupportedMessage, SupportedMessageArr, SystemMessage, ToolCallObj, ToolCallsMessage, ToolResultMessage, UserMessage } from './types'
+import {
+    AssistantMessage,
+    MessageRole,
+    SupportedMessage,
+    SupportedMessageArr,
+    SystemMessage,
+    ToolCallObj,
+    ToolCallsMessage,
+    ToolResultMessage,
+    UserMessage,
+} from './types.js'
 import { Message } from '@huggingface/transformers'
 
 export const SUPPORTED_ROLES = ['system', 'user', 'assistant', 'tool'] as const
-
 
 /**
  * Checks whether an object is a structurally valid BaseWMsg format.
@@ -111,7 +120,13 @@ export function isToolResultMessage(x: any): x is ToolResultMessage {
 }
 
 export function isSupportedMessage(x: unknown): x is SupportedMessage {
-    return isSystemMessage(x) || isUserMessage(x) || isAssistantMessage(x) || isToolCallsMessage(x) || isToolResultMessage(x)
+    return (
+        isSystemMessage(x) ||
+        isUserMessage(x) ||
+        isAssistantMessage(x) ||
+        isToolCallsMessage(x) ||
+        isToolResultMessage(x)
+    )
 }
 
 export function isSupportedMessageArr(x: unknown): x is SupportedMessageArr {

@@ -1,15 +1,15 @@
-import { glob } from "node:fs/promises"
-import { join, resolve } from "node:path"
-import { createSystemMessage, createUserMessage } from "../src/Message/factories"
-import { SupportedMessage } from "../src/Message/types"
-import { MicroChat } from "../src/MicroChat"
-import { MicroEmbedder } from "../src/MicroEmbedder"
-import { MicroRAG } from "../src/MicroRAG"
-import { PipelineFactory } from "../src/PipelineFactory"
+import { glob } from 'node:fs/promises'
+import { join, resolve } from 'node:path'
+import { createSystemMessage, createUserMessage } from '../src/Message/factories'
+import { SupportedMessage } from '../src/Message/types'
+import { MicroChat } from '../src/MicroChat'
+import { MicroEmbedder } from '../src/MicroEmbedder'
+import { MicroRAG } from '../src/MicroRAG'
+import { PipelineFactory } from '../src/PipelineFactory'
 import { readFile } from 'node:fs/promises'
-import { createProgressCallback } from "./progress-callback"
+import { createProgressCallback } from './progress-callback'
 
-async function loadContents(): Promise<{filePath: string, content: string}[]> {
+async function loadContents(): Promise<{ filePath: string; content: string }[]> {
     const ret = []
     const searchRoot = resolve(import.meta.dirname)
     for await (const filePath of glob('content/**/*.md', { cwd: searchRoot })) {
@@ -32,7 +32,7 @@ async function main() {
     console.time('Initializing RAG...')
     const rag = new MicroRAG(microEmbedder)
     const fileContents = await loadContents()
-    for(const { filePath, content } of fileContents) {
+    for (const { filePath, content } of fileContents) {
         console.time(filePath)
         await rag.addDocument(content, { src: filePath })
         console.timeEnd(filePath)
@@ -53,23 +53,21 @@ async function main() {
 
     const originalSystemInstructions = 'You are an SRE expert'
 
-    const messages: SupportedMessage[] = [
-        createSystemMessage(originalSystemInstructions),
-    ]
-    
+    const messages: SupportedMessage[] = [createSystemMessage(originalSystemInstructions)]
+
     do {
         console.log('Prompt:')
-        const userInput = await new Promise<string>(resolve => {
-            process.stdin.once('data', data => resolve(data.toString().trim()))
+        const userInput = await new Promise<string>((resolve) => {
+            process.stdin.once('data', (data) => resolve(data.toString().trim()))
         })
- 
+
         if (['exit', 'quit', ''].includes(userInput.trim().toLowerCase())) {
             break
         }
 
         messages.push(createUserMessage(userInput))
         const ephemeralMessages = [...messages]
-        
+
         const relevantContext = await rag.getSimilaritySystemMessage(userInput, undefined, 3)
         if (relevantContext) {
             ephemeralMessages.push(relevantContext)
@@ -92,7 +90,7 @@ async function main() {
     console.log('Goodbye!')
 }
 
-main().catch(error => {
+main().catch((error) => {
     console.error('An error occurred:', error)
     process.exit(1)
 })

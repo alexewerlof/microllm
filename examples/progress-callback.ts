@@ -1,12 +1,15 @@
-import { ProgressCallback, ProgressInfo } from "@huggingface/transformers"
+import { ProgressCallback, ProgressInfo } from '@huggingface/transformers'
 import cliProgress from 'cli-progress'
 
 export function createProgressCallback(task: string = ''): ProgressCallback {
-    const cliProgressContainer = new cliProgress.MultiBar({
-        format: task + ` > {name} {bar} {file} | Progress: {percentage}% | Remaining: {eta_formatted}`,
-        stopOnComplete: true,
-        hideCursor: false,
-    }, cliProgress.Presets.shades_grey);
+    const cliProgressContainer = new cliProgress.MultiBar(
+        {
+            format: task + ` > {name} {bar} {file} | Progress: {percentage}% | Remaining: {eta_formatted}`,
+            stopOnComplete: true,
+            hideCursor: false,
+        },
+        cliProgress.Presets.shades_grey,
+    )
 
     const files: {
         [name: string]: {
@@ -14,7 +17,7 @@ export function createProgressCallback(task: string = ''): ProgressCallback {
         }
     } = {}
 
-    function getBar({ name, file }: { name: string, file: string }): cliProgress.SingleBar {
+    function getBar({ name, file }: { name: string; file: string }): cliProgress.SingleBar {
         if (!files[name]) {
             files[name] = {}
         }
@@ -48,5 +51,5 @@ export function createProgressCallback(task: string = ''): ProgressCallback {
             default:
                 console.warn(`Progress event with unknown status: ${JSON.stringify(progressInfo)}`)
         }
-    };
+    }
 }

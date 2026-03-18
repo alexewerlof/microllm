@@ -1,5 +1,5 @@
-import { StoppingCriteria, StoppingCriteriaList } from "@huggingface/transformers"
-import { isA } from "jty"
+import { StoppingCriteria, StoppingCriteriaList } from '@huggingface/transformers'
+import { isA } from 'jty'
 
 /**
  * Custom stopping criteria that halts LLM text generation when an AbortSignal is specifically triggered.

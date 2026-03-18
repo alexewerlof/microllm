@@ -43,4 +43,3 @@ export interface ToolResultMessage extends Message {
 export type SupportedMessage = SystemMessage | UserMessage | AssistantMessage | ToolCallsMessage | ToolResultMessage
 
 export type SupportedMessageArr = SupportedMessage[]
-

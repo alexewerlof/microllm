@@ -1,4 +1,4 @@
-import { isFin, isNum } from "jty";
+import { isFin, isNum } from 'jty'
 
 // -- Intl.DurationFormat is not yet in TypeScript's lib definitions --
 

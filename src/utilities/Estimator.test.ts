@@ -9,11 +9,7 @@ describe(_test.getAverageSpeed.name, () => {
         const dp = (timestamp: number, progress: number) => ({ timestamp, progress })
 
         const now = Date.now()
-        const data = [
-            dp(now, 0),
-            dp(now + 1000, 25),
-            dp(now + 2000, 50),
-        ]
+        const data = [dp(now, 0), dp(now + 1000, 25), dp(now + 2000, 50)]
 
         assert.strictEqual(getAverageSpeed(data), 25 / 1000)
     })
