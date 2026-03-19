@@ -1,4 +1,4 @@
-import { hasProp, isBool, isDef, isFn, isObj, isStr } from 'jty'
+import { isBool, isDef, isFn, isObj, isStr } from 'jty'
 
 export interface FunctionToolBaseProperty {
     /** The name of the parameter. */
@@ -79,6 +79,10 @@ export function isFunctionToolArrayProperty(obj: unknown): obj is FunctionToolAr
 
 export type FunctionToolProperty = FunctionToolSimpleProperty | FunctionToolArrayProperty
 
+export function isFunctionToolProperty(obj: unknown): obj is FunctionToolProperty {
+    return isFunctionToolSimpleProperty(obj) || isFunctionToolArrayProperty(obj)
+}
+
 export interface FunctionToolPropertiesMap {
     [key: string]: {
         /** The JSON Schema type of the property (e.g. 'string', 'array'). */
@@ -95,18 +99,7 @@ export function isFunctionToolPropertiesMap(obj: unknown): obj is FunctionToolPr
         return false
     }
 
-    if (!hasProp(obj, 'type') || !isStr(obj.type)) {
-        return false
-    }
-
-    if (hasProp(obj, 'description') && !isStr(obj.description)) {
-        return false
-    }
-
-    if (hasProp(obj, 'items') && !isStr(obj.items)) {
-        return false
-    }
-    return true
+    return Object.values(obj).every(isFunctionToolProperty)
 }
 
 export interface FunctionToolFunctionDeclaration {
@@ -144,7 +137,7 @@ export function isFunctionToolFunctionDeclaration(obj: unknown): obj is Function
         return false
     }
 
-    if (!isObj(parameters)) {
+    if (isDef(parameters) && !isObj(parameters)) {
         return false
     }
 
@@ -152,11 +145,27 @@ export function isFunctionToolFunctionDeclaration(obj: unknown): obj is Function
         return false
     }
 
-    if (isDef(parameters) && !isFunctionToolPropertiesMap(parameters.properties)) {
+    if (isDef(parameters) && parameters.type !== 'object') {
         return false
     }
 
     if (isDef(parameters) && !isFunctionToolPropertiesMap(parameters.properties)) {
+        return false
+    }
+
+    if (isDef(parameters) && isDef(parameters.required) && !Array.isArray(parameters.required)) {
+        return false
+    }
+
+    if (
+        isDef(parameters) &&
+        Array.isArray(parameters.required) &&
+        !parameters.required.every((requiredName) => isStr(requiredName))
+    ) {
+        return false
+    }
+
+    if (isDef(parameters) && isDef(parameters.additionalProperties) && !isBool(parameters.additionalProperties)) {
         return false
     }
 

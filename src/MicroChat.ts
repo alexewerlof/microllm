@@ -1,9 +1,9 @@
 import { Message, StoppingCriteriaList, Tensor, TextGenerationConfig, TextStreamer } from '@huggingface/transformers'
 import { PipelineFactory } from './PipelineFactory.js'
-import { isA, isArr, isDef, isObj, isPOJO, isStr } from 'jty'
+import { isArr, isDef, isObj, isPOJO, isStr } from 'jty'
 import { normalizeMessageArray } from './utilities/normalization.js'
 import { SignalStoppingCriteria } from './utilities/SignalStoppingCriteria.js'
-import { Tools } from './Tools.js'
+import { FunctionToolDeclaration, isFunctionToolDeclaration } from './FunctionTool.js'
 import { SupportedMessage } from './Message/types.js'
 import { createAssistantMessage } from './Message/factories.js'
 import { convertSupportedMessagesToLiquidMessages, tryParseToolCalls } from './liquid-tools-transpiler.js'
@@ -21,8 +21,8 @@ export interface MicroChatCompleteParams {
     config?: Partial<TextGenerationConfig>
     /** Optional abort signal. */
     signal?: AbortSignal
-    /** Optional tools instance whose declarations are injected into the prompt. */
-    tools?: Tools
+    /** Optional tool declarations whose schemas are injected into the prompt. */
+    tools?: FunctionToolDeclaration[]
     /** Optional callback function which will receive every token as it's generated */
     onToken?: (token: string) => unknown
 }
@@ -136,8 +136,19 @@ export class MicroChat {
      * const text = await llm.complete({ messages: [{ role: 'user', content: 'Hello' }] })
      *
      * // With tool definitions injected
-     * const tools = new Tools()
-     * tools.addTool('get_time', 'Get the current time').func = () => String(new Date())
+    * const tools: FunctionToolDeclaration[] = [{
+    *   type: 'function',
+    *   function: {
+    *     name: 'get_time',
+    *     description: 'Get the current time',
+    *     parameters: {
+    *       type: 'object',
+    *       properties: {},
+    *       required: [],
+    *       additionalProperties: false,
+    *     },
+    *   },
+    * }]
      * const text = await llm.complete({ messages, tools })
      * ```
      */
@@ -152,9 +163,9 @@ export class MicroChat {
         }
 
         if (isDef(tools)) {
-            if (!isA(tools, Tools)) {
+            if (!Array.isArray(tools) || !tools.every(isFunctionToolDeclaration)) {
                 throw new TypeError(
-                    `Expected instance of Tools for tools, but got ${JSON.stringify(tools)} (${typeof tools})`,
+                    `Expected tools to be an array of FunctionToolDeclaration objects, but got ${JSON.stringify(tools)} (${typeof tools})`,
                 )
             }
         }
@@ -201,7 +212,7 @@ export class MicroChat {
         const normalizedMessages = normalizeMessageArray(prepared)
 
         const inputs = pipelineInstance.tokenizer.apply_chat_template(normalizedMessages, {
-            tools: tools?.toJSON(),
+            tools,
             add_generation_prompt: true,
             return_dict: true,
         }) as Record<string, unknown>

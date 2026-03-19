@@ -15,6 +15,9 @@ This repository contains a small & lightweight LLM library using [Liquid.ai](htt
 # Defensive programming
 
 - Never assume the shape, content, or types of a value that is coming from outside this code base: user code, dependencies, databases, AI generated, APIs, etc. Always verify.
+- Verify the expectations close to where the value is used.
+- Do not double-verify the value (for performance reasons). If a value is not used in a code construct but rather passed to a another code construct, let the code that uses the value verify it and throw the exceptions accordingly.
+- Emit meaningful errors. Use the `cause` field when creating chained errors to include the context and additional information that's useful for debugging.
 - Use the `jty` library extensively to validate the types that you expect because although the code is written in TypeScript, it may be called with Javascript where typechecking is absent. Also when working with the Small Language Models we cannot be sure that they follow all the instructions. Always verify and fail with meaningful error messages that help you debug the issue and fix it.
 
 # Tests
@@ -28,7 +31,7 @@ This repository contains a small & lightweight LLM library using [Liquid.ai](htt
 - They are followed by more `test()` blocks which test different edge cases in the order of how common you believe they can be.
 - Larget algorithms are implemented in a series of functions that depend on each other. Always start the tests from the leaf nodes of that dependency tree to ensure the logic bottom up.
 
-## \_test convention
+## `_test` convention
 
 - Every module has a public API that is intended to be used by the other modules, and optionally some internal constructs (e.g. function, class) that are used for internal implementation.
 - Only the public API should be `export`ed directly. All internal constructs must NOT be exported directly — they should be exposed exclusively through `export const _test = { ... }`.

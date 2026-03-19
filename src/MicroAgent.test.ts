@@ -67,7 +67,7 @@ describe('MicroAgent', () => {
 
         const agent = new MicroAgent(llm)
         const messages: SupportedMessage[] = [{ role: 'user', content: 'What time is it?' }]
-        const result = await agent.work(messages, tools)
+    const result = await agent.work({ messages, tools })
 
         assert.strictEqual(invoked, true)
         const lastMessage = result[result.length - 1]
@@ -88,7 +88,7 @@ describe('MicroAgent', () => {
 
         const agent = new MicroAgent(llm)
         const messages: SupportedMessage[] = [{ role: 'user', content: 'What time is it?' }]
-        const result = await agent.work(messages, tools)
+    const result = await agent.work({ messages, tools })
 
         assert.strictEqual(invoked, false)
         const lastMessage = result[result.length - 1]
@@ -102,7 +102,7 @@ describe('MicroAgent', () => {
         const tools = new Tools()
         const agent = new MicroAgent(llm)
         const messages: SupportedMessage[] = [{ role: 'user', content: 'Hello' }]
-        const result = await agent.work(messages, tools)
+        const result = await agent.work({ messages, tools })
 
         const lastMessage = result[result.length - 1]
         assert.strictEqual(lastMessage.content, 'final answer')
@@ -115,7 +115,7 @@ describe('MicroAgent', () => {
         const tools = new Tools()
         const agent = new MicroAgent(llm)
         const messages: SupportedMessage[] = [{ role: 'user', content: 'What time is it?' }]
-        const result = await agent.work(messages, tools)
+        const result = await agent.work({ messages, tools })
 
         const lastMessage = result[result.length - 1]
         assert.strictEqual(lastMessage.content, 'It is noon.')
@@ -158,7 +158,7 @@ describe('MicroAgent', () => {
             },
             { role: 'tool', tool_call_id: 'call_123', content: 'noon' },
         ]
-        await agent.work(messages, tools)
+        await agent.work({ messages, tools })
 
         assert.ok(capturedMessages)
         const assistantMsg = capturedMessages.find((m) => m.role === 'assistant')
@@ -172,7 +172,7 @@ describe('MicroAgent', () => {
         const tools = new Tools()
         const agent = new MicroAgent(llm)
         const messages: SupportedMessage[] = [{ role: 'user', content: 'Hi' }]
-        const result = await agent.work(messages, tools)
+        const result = await agent.work({ messages, tools })
 
         assert.notStrictEqual(result, messages)
         assert.strictEqual(result.length, 1)
@@ -191,8 +191,46 @@ describe('MicroAgent', () => {
         const agent = new MicroAgent(llm)
         const messages: SupportedMessage[] = [{ role: 'user', content: 'What time is it?' }]
 
-        await assert.rejects(() => agent.work(messages, tools), {
+        await assert.rejects(() => agent.work({ messages, tools }), {
             message: `Maximum consecutive tool calls exceeded (${MicroAgent.MAX_TOOL_CALLS}).`,
         })
+    })
+
+    test('forwards the abort signal to the chat completion loop', async () => {
+        const llm = new MicroChat(new PipelineFactory('text-generation', 'test-model'))
+        let capturedGenerateArgs: Record<string, unknown> | undefined
+
+        llm.pipelineFactory.getPipeline = async () =>
+            ({
+                tokenizer: {
+                    apply_chat_template() {
+                        return { input_ids: MOCK_PROMPT_IDS, attention_mask: [[1, 1, 1]] }
+                    },
+                    batch_decode(tokenIds: unknown) {
+                        if (tokenIds === MOCK_PROMPT_IDS) {
+                            return [MOCK_PROMPT_TEXT]
+                        }
+                        return [MOCK_PROMPT_TEXT + 'done']
+                    },
+                },
+                model: {
+                    async generate(args: Record<string, unknown>) {
+                        capturedGenerateArgs = args
+                        return MOCK_OUTPUT_IDS
+                    },
+                },
+            }) as any
+
+        const controller = new AbortController()
+        const agent = new MicroAgent(llm)
+
+        await agent.work({
+            messages: [{ role: 'user', content: 'Hello' }],
+            tools: new Tools(),
+            signal: controller.signal,
+        })
+
+        assert.ok(capturedGenerateArgs)
+        assert.ok('stopping_criteria' in capturedGenerateArgs)
     })
 })

@@ -42,7 +42,7 @@ async function main() {
 
     do {
         console.log('Current messages:', messages)
-        const resultMessages = await agent.work(messages, tools)
+        const resultMessages = await agent.work({ messages, tools })
         console.log(resultMessages)
         const lastMessage = resultMessages[resultMessages.length - 1]
         if (isAssistantMessage(lastMessage) && lastMessage.content.toUpperCase().endsWith('STOP')) {

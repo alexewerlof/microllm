@@ -1,8 +1,17 @@
-import { isA, isArr } from 'jty'
+import { isA, isArr, isObj } from 'jty'
 import { Tools } from './Tools.js'
 import { MicroChat } from './MicroChat.js'
 import { SupportedMessage } from './Message/types.js'
 import { isAssistantMessage, isToolCallsMessage } from './Message/guards.js'
+
+export interface MicroAgentWorkParams {
+    /** The conversation messages. */
+    messages: SupportedMessage[]
+    /** The executable tools available for the agent to call. */
+    tools: Tools
+    /** Optional abort signal forwarded to the underlying chat completion calls. */
+    signal?: AbortSignal
+}
 
 /**
  * Orchestrates the agentic loop between a MicroChat and a set of Tools.
@@ -18,7 +27,7 @@ import { isAssistantMessage, isToolCallsMessage } from './Message/guards.js'
  * ]
  * const tools = new Tools()
  * tools.addTool('get_time', 'Get the current time').func = () => String(new Date())
- * const result = await agent.work(messages, tools)
+ * const result = await agent.work({ messages, tools })
  * // result is the mutated messages array with tool calls and final answer appended
  * ```
  */
@@ -59,17 +68,23 @@ export class MicroAgent {
      *
      * @param messages The conversation messages array (mutated in place).
      * @param tools The tools available for the agent to call.
-     * @returns The mutated messages array with all tool calls and the final assistant response appended.
+     * @returns The new messages that are generated as a result of work. The caller can choose to append these to the original messages array or handle them separately.
      * @throws {Error} If maximum consecutive tool calls is exceeded.
      *
      * @example
      * ```ts
-     * const result = await agent.work(messages, tools)
+     * const result = await agent.work({ messages, tools })
      * const lastMessage = result[result.length - 1]
      * console.log(lastMessage.content)
      * ```
      */
-    async work(messages: SupportedMessage[], tools: Tools): Promise<SupportedMessage[]> {
+    async work(params: MicroAgentWorkParams): Promise<SupportedMessage[]> {
+        if (!isObj(params)) {
+            throw new TypeError(`Expected params to be an object, but got ${params} (${typeof params})`)
+        }
+
+        const { messages, tools, signal } = params
+
         if (!isArr(messages)) {
             throw new TypeError(`Expected messages to be an array, but got ${messages} (${typeof messages})`)
         }
@@ -77,18 +92,19 @@ export class MicroAgent {
             throw new TypeError(`Expected tools to be an instance of Tools, but got ${tools} (${typeof tools})`)
         }
 
-        const ret: SupportedMessage[] = []
+        const results: SupportedMessage[] = []
         for (let iteration = 0; iteration < MicroAgent.MAX_TOOL_CALLS; iteration++) {
-            console.log('::::Current messages:', messages)
+            console.debug(results)
             const result = await this.#microChat.complete({
-                messages: [...messages, ...ret],
-                tools,
+                messages: [...messages, ...results],
+                tools: tools.toJSON(),
+                signal,
             })
 
             if (isToolCallsMessage(result)) {
-                ret.push(result)
+                results.push(result)
                 const toolResults = await tools.exeToolCalls(result)
-                ret.push(...toolResults)
+                results.push(...toolResults)
                 continue
             }
 
@@ -98,8 +114,8 @@ export class MicroAgent {
                 )
             }
 
-            ret.push(result)
-            return ret
+            results.push(result)
+            return results
         }
 
         throw new Error(`Maximum consecutive tool calls exceeded (${MicroAgent.MAX_TOOL_CALLS}).`)

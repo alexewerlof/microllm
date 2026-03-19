@@ -31,7 +31,7 @@ async function main() {
 
     const tools = new Tools()
     tools.addTool('get_time', 'Get the current time in the current location').func = getTime
-    const resultMessages = await agent.work(messages, tools)
+    const resultMessages = await agent.work({ messages, tools })
     const lastMessage = resultMessages[resultMessages.length - 1]
     console.log('Full response:', lastMessage.content)
 }
