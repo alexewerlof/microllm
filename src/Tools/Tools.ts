@@ -1,6 +1,8 @@
-import { ToolCallObj, ToolCallsMessage, ToolResultMessage } from './Message/types.js'
-import { createToolResultMessage } from './Message/factories.js'
-import { FunctionTool, FunctionToolDeclaration } from './FunctionTool.js'
+import { ToolCallObj, ToolCallsMessage, ToolResultMessage } from '../Message/types.js'
+import { createToolResultMessage } from '../Message/factories.js'
+import { FunctionTool } from '../Tools/FunctionTool.js'
+import { isToolCallsMessage } from '../Message/guards.js'
+import { FunctionToolDeclaration } from './types.js'
 
 export class Tools {
     tools: FunctionTool[] = []
@@ -13,34 +15,49 @@ export class Tools {
         return new Tools(...functionToolsArr)
     }
 
-    addTool(name: string, ...description: string[]): FunctionTool {
+    addTool(name: string, description: string): FunctionTool {
         // Ensure the tool name is unique
         if (this.tools.some((tool) => tool.name === name)) {
             throw new Error(`A tool with the name "${name}" already exists.`)
         }
-        const newTool = new FunctionTool(name, ...description)
+        const newTool = new FunctionTool(name, description)
         this.tools.push(newTool)
         return newTool
     }
 
-    async exeToolCallObj(toolCallObj: ToolCallObj): Promise<ToolResultMessage> {
+    async #exeToolCallObj(toolCallObj: ToolCallObj): Promise<ToolResultMessage> {
         const {
             id,
             function: { name, arguments: argsStr },
         } = toolCallObj
         console.debug(`Agent wants to call ${name}(${argsStr})`)
         const tool = this.tools.find((tool) => tool.name === name)
-        return createToolResultMessage(
-            id,
-            tool ? await tool.invoke(argsStr) : `Error: No tool found with the name "${name}"`,
-        )
+        try {
+            if (!tool) {
+                throw new Error(`No tool found with the name "${name}"`)
+            }
+            return createToolResultMessage(
+                id,
+                await tool.invoke(argsStr),
+            )
+        } catch (error) {
+            return createToolResultMessage(
+                id,
+                `Error executing tool "${name}": ${error instanceof Error ? error.message : String(error)}`,
+            )
+        }
     }
 
-    async exeToolCalls(toolsCallMessage: ToolCallsMessage): Promise<ToolResultMessage[]> {
+    async exeToolCallsMessage(toolsCallMessage: ToolCallsMessage): Promise<ToolResultMessage[]> {
+        if (!isToolCallsMessage(toolsCallMessage)) {
+            throw new TypeError(
+                `Expected a ToolCallsMessage, but got ${JSON.stringify(toolsCallMessage)} (${typeof toolsCallMessage})`,
+            )
+        }
         const functionCalls = toolsCallMessage.tool_calls.filter((t) => t.type === 'function')
         const toolResultMessages: ToolResultMessage[] = []
         for (const toolCall of functionCalls) {
-            toolResultMessages.push(await this.exeToolCallObj(toolCall))
+            toolResultMessages.push(await this.#exeToolCallObj(toolCall))
         }
         return toolResultMessages
     }

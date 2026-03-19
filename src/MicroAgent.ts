@@ -1,5 +1,5 @@
 import { isA, isArr, isObj } from 'jty'
-import { Tools } from './Tools.js'
+import { Tools } from './Tools/index.js'
 import { MicroChat } from './MicroChat.js'
 import { SupportedMessage } from './Message/types.js'
 import { isAssistantMessage, isToolCallsMessage } from './Message/guards.js'
@@ -103,7 +103,7 @@ export class MicroAgent {
 
             if (isToolCallsMessage(result)) {
                 results.push(result)
-                const toolResults = await tools.exeToolCalls(result)
+                const toolResults = await tools.exeToolCallsMessage(result)
                 results.push(...toolResults)
                 continue
             }
