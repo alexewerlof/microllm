@@ -2,6 +2,7 @@ import { createUserMessage } from '../src/Message/factories'
 import { SupportedMessage } from '../src/Message/types'
 import { MicroChat } from '../src/MicroChat'
 import { PipelineFactory } from '../src/PipelineFactory'
+import { Tools } from '../src/Tools'
 import { createProgressCallback } from './progress-callback'
 
 async function main() {
@@ -10,6 +11,11 @@ async function main() {
         progress_callback: createProgressCallback('Chat Pipeline'),
     })
     const llm = new MicroChat(pipelineFactory)
+
+    const tools = new Tools()
+    tools.addTool('get_time', 'Get the current time').func = async () => {
+        return new Date().toLocaleTimeString()
+    }
 
     const messages: SupportedMessage[] = [
         {
@@ -30,8 +36,13 @@ async function main() {
         } else {
             messages.push(createUserMessage(userInput))
             console.log('Response:')
-            const assistantContent = await llm.complete({ messages })
-            console.log(assistantContent.content)
+            // We pass the tools just to demonstrate what MicroChat emits. To call tools use MicroAgent.
+            const assistantContent = await llm.complete({ messages, tools: tools.toJSON() })
+            if (assistantContent.content) {
+                console.log(assistantContent.content)
+            } else {
+                console.dir(assistantContent, { depth: null }) 
+            }
             messages.push(assistantContent)
         }
     } while (shouldContinue)
