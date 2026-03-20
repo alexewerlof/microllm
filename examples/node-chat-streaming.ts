@@ -5,7 +5,7 @@ import { PipelineFactory } from '../src/PipelineFactory'
 import { createProgressCallback } from './progress-callback'
 
 async function main() {
-    const pipelineFactory = new PipelineFactory('text-generation', 'onnx-community/LFM2-1.2B-Tool-ONNX', {
+    const pipelineFactory = new PipelineFactory('text-generation', 'onnx-community/LFM2-1.2B-ONNX', {
         dtype: 'q4',
         progress_callback: createProgressCallback('Chat Pipeline'),
     })
