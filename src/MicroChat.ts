@@ -234,13 +234,9 @@ export class MicroChat {
             false,
         )
 
-        try {
-            const toolCallsMessage = tryParseAsToolCallsMessage(rawAssistantContent)
-            if (toolCallsMessage) {
-                return toolCallsMessage
-            }
-        } catch {
-            // Malformed tool call tokens from model output — treat as plain text
+        const toolCallsMessage = tryParseAsToolCallsMessage(rawAssistantContent)
+        if (toolCallsMessage) {
+            return toolCallsMessage
         }
 
         // Second pass: decode stripping special tokens for clean text
