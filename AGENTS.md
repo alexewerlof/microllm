@@ -14,7 +14,7 @@ This repository contains a small & lightweight LLM library using [Liquid.ai](htt
 
 # Defensive programming
 
-- Never assume the shape, content, or types of a value that is coming from outside this code base: user code, dependencies, databases, AI generated, APIs, etc. Always verify.
+- Never assume the type of variables and shape of objects that is coming from outside this code base: user code, dependencies, databases, AI generated, APIs, etc. Set the type to `unknown` and **ALWAYS** verify using 'jty'.
 - Verify the expectations close to where the value is used.
 - Do not double-verify the value (for performance reasons). If a value is not used in a code construct but rather passed to a another code construct, let the code that uses the value verify it and throw the exceptions accordingly.
 - Emit meaningful errors. Use the `cause` field when creating chained errors to include the context and additional information that's useful for debugging.
