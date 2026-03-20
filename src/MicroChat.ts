@@ -6,7 +6,7 @@ import { SignalStoppingCriteria } from './utilities/SignalStoppingCriteria.js'
 import { FunctionToolDeclaration, isFunctionToolDeclaration } from './Tools/index.js'
 import { SupportedMessage } from './Message/types.js'
 import { createAssistantMessage } from './Message/factories.js'
-import { convertSupportedMessagesToLiquidMessages, tryParseToolCalls } from './liquid-tools-transpiler.js'
+import { convertSupportedMessagesToLiquidMessages, tryParseAsToolCallsMessage } from './liquid-tools-transpiler.js'
 
 const defaultTextGenerationConfig: Partial<TextGenerationConfig> = {
     max_new_tokens: 512,
@@ -227,7 +227,7 @@ export class MicroChat {
         })
 
         // First pass: decode preserving special tokens to detect tool calls
-        const rawAssistantText = decodeAssistantText(
+        const rawAssistantContent = decodeAssistantText(
             pipelineInstance.tokenizer,
             outputTokenIds as Tensor,
             inputs.input_ids as Tensor,
@@ -235,7 +235,7 @@ export class MicroChat {
         )
 
         try {
-            const toolCallsMessage = tryParseToolCalls(rawAssistantText)
+            const toolCallsMessage = tryParseAsToolCallsMessage(rawAssistantContent)
             if (toolCallsMessage) {
                 return toolCallsMessage
             }

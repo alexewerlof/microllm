@@ -85,39 +85,45 @@ export function parsePythonToolCallObj(text: string): ToolCallObj[] {
     ]
 }
 
+export function indexOfToolCallStartToken(rawAssistantResponse: string): number {
+    if (!isStr(rawAssistantResponse)) {
+        throw new TypeError(`Expected assistant response to be a string, but got ${rawAssistantResponse} (${typeof rawAssistantResponse})`)
+    }
+    return rawAssistantResponse.indexOf(TOOL_CALL_START_TOKEN)
+}
+
 /**
  * Parses an LFM2 assistant response containing Pythonic tool call tokens into a ToolCallsMessage.
  * Expects the text to contain `<|tool_call_start|>[fn(args)]<|tool_call_end|>` markers.
  * Returns null if the text does not contain a tool call start token.
  *
- * @param text The raw assistant response text.
+ * @param rawAssistantResponse The raw assistant response text.
  * @returns A ToolCallsMessage if a valid tool call is detected, or null otherwise.
  * @throws {SyntaxError} If the start token is found but the end token is missing, or if brackets are missing.
  *
  * @example
  * ```ts
- * tryParseToolCalls('<|tool_call_start|>[get_time()]<|tool_call_end|>') // => ToolCallsMessage
- * tryParseToolCalls('Hello world') // => null
+ * tryParseAsToolCallsMessage('<|tool_call_start|>[get_time()]<|tool_call_end|>') // => ToolCallsMessage
+ * tryParseAsToolCallsMessage('Hello world') // => null
  * ```
  */
-export function tryParseToolCalls(text: string): ToolCallsMessage | null {
-    if (!isStr(text)) {
-        throw new TypeError(`Expected text to be a string, but got ${text} (${typeof text})`)
+export function tryParseAsToolCallsMessage(rawAssistantResponse: string): ToolCallsMessage | null {
+    const startIdx = indexOfToolCallStartToken(rawAssistantResponse)
+    if (startIdx === -1) {
+        // If no start token is found, we assume there are no tool calls and it's a regular AssistantMessage.
+        return null
     }
-
-    const startIdx = text.indexOf(TOOL_CALL_START_TOKEN)
-    if (startIdx === -1) return null
 
     const afterStartIdx = startIdx + TOOL_CALL_START_TOKEN.length
-    const endIdx = text.indexOf(TOOL_CALL_END_TOKEN, afterStartIdx)
+    const endIdx = rawAssistantResponse.indexOf(TOOL_CALL_END_TOKEN, afterStartIdx)
     if (endIdx === -1) {
-        throw new SyntaxError(`Found ${TOOL_CALL_START_TOKEN} but missing ${TOOL_CALL_END_TOKEN} in ${text}`)
+        throw new SyntaxError(`Found ${TOOL_CALL_START_TOKEN} but missing ${TOOL_CALL_END_TOKEN} in ${rawAssistantResponse}`)
     }
 
-    const inner = text.substring(afterStartIdx, endIdx).trim()
+    const inner = rawAssistantResponse.substring(afterStartIdx, endIdx).trim()
 
     if (!inner.startsWith('[') || !inner.endsWith(']')) {
-        throw new SyntaxError(`Expected tool call to be wrapped in brackets, but got: ${inner} in ${text}`)
+        throw new SyntaxError(`Expected tool call to be wrapped in brackets, but got: ${inner} in ${rawAssistantResponse}`)
     }
 
     const toolCallObjs = parsePythonToolCallObj(inner)
@@ -157,8 +163,9 @@ function toolCallObjArgumentsToStr(argStr?: string): string {
 function toolCallsMessageToPython(toolCallsMessage: ToolCallsMessage): AssistantMessage {
     const content = toolCallsMessage.tool_calls
         .filter(isToolCallObj)
-        .map(({ function: { name, arguments: args }}) => `${name}(${toolCallObjArgumentsToStr(args)})`)
+        .map(({ function: { name, arguments: argStr }}) => `${name}(${toolCallObjArgumentsToStr(argStr)})`)
         .join(',')
+
     return createAssistantMessage(`${TOOL_CALL_START_TOKEN}[${content}]${TOOL_CALL_END_TOKEN}`)
 }
 
