@@ -9,23 +9,33 @@ import { createSystemMessage } from './Message/factories.js'
  * Works in both Node.js and browser environments.
  * Handles chunking, embedding, and context retrieval.
  */
-export class MicroRAG extends VectorStore {
+export class MicroRAG {
     #embedder: MicroEmbedder
+    #vectorStore: VectorStore
 
     /**
      * Initializes a new RAG instance.
      *
      * @param embedder - Initialized embedder instance used to convert text to vectors.
+     * @param vectorStore - Optional store instance used for indexing and retrieval.
      * @throws {TypeError} If embedder is not an instance of MicroEmbedder.
+     * @throws {TypeError} If vectorStore is not an instance of VectorStore.
      */
-    constructor(embedder: MicroEmbedder) {
+    constructor(embedder: MicroEmbedder, vectorStore: VectorStore = new VectorStore()) {
         if (!isA(embedder, MicroEmbedder)) {
             throw new TypeError(
                 `Expected MicroEmbedder instance for embedder, but got ${embedder} (${typeof embedder})`,
             )
         }
-        super()
+
+        if (!isA(vectorStore, VectorStore)) {
+            throw new TypeError(
+                `Expected VectorStore instance for vectorStore, but got ${vectorStore} (${typeof vectorStore})`,
+            )
+        }
+
         this.#embedder = embedder
+        this.#vectorStore = vectorStore
     }
 
     /**
@@ -46,7 +56,7 @@ export class MicroRAG extends VectorStore {
         const chunks = headerChunk(text)
         for (const { content, metadata } of chunks) {
             const embedding = await this.#embedder.embed(content)
-            this.addRecord(content, embedding, { ...docMetadata, ...metadata })
+            this.#vectorStore.addRecord(content, embedding, { ...docMetadata, ...metadata })
         }
         return chunks.length
     }
@@ -65,33 +75,7 @@ export class MicroRAG extends VectorStore {
         maxResults?: number,
     ): Promise<VectorStoreQueryResult[]> {
         const queryEmbedding = await this.#embedder.embed(query)
-        return this.getSimilarRecords(queryEmbedding, minScore, maxResults)
-    }
-
-    /**
-     * Augments a user query with retrieved context from the knowledge base.
-     * @param query - The user query.
-     * @param minScore - Minimum similarity score (0-1). See VectorStore.getSimilarRecords.
-     * @param maxResults - Maximum number of results. See VectorStore.getSimilarRecords.
-     * @returns The augmented prompt, or original query if no context found.
-     */
-    async augmentQuery(query: string, minScore?: number, maxResults?: number): Promise<string> {
-        const context = await this.getRelevantDocuments(query, minScore, maxResults)
-        if (context.length === 0) {
-            console.log('No RAG context found for query')
-            return query
-        }
-
-        console.log(
-            `Found ${context.length} RAG context for query. Similarity scores: ${context.map((r) => r.score.toFixed(3)).join(', ')}`,
-        )
-        return [
-            'Background information context to help answer the user:',
-            ...context.map((r) => r.text),
-            '',
-            'User Question:',
-            query,
-        ].join('\n')
+        return this.#vectorStore.getSimilarRecords(queryEmbedding, minScore, maxResults)
     }
 
     async getSimilaritySystemMessage(query: string, minScore?: number, maxResults?: number) {
