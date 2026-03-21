@@ -5,6 +5,7 @@ const baseConfig: Omit<Options, 'entry' | 'minify' | 'platform'> = {
     outDir: 'lib',
     dts: true,
     sourcemap: true,
+    tsconfig: 'tsconfig.build.json',
     noExternal: ['jty', '@huggingface/transformers'],
 }
 

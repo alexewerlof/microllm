@@ -1,18 +1,8 @@
 {
-    "$schema": "https://json.schemastore.org/tsconfig",
+    "extends": "./tsconfig.base.json",
     "compilerOptions": {
-        "target": "esnext",
-        "lib": ["ESNext", "DOM"],
-        "module": "NodeNext",
-        "moduleResolution": "NodeNext",
-        "strict": true,
-        "esModuleInterop": true,
-        "skipLibCheck": true,
-        "declaration": true,
-        "sourceMap": true,
-        "outDir": "lib",
-        "newLine": "LF"
+        "types": ["node"],
+        "typeRoots": ["./node_modules/@types"],
     },
-    "include": ["src"],
-    "exclude": ["node_modules", "lib"]
+    "include": ["src", "examples"]
 }
