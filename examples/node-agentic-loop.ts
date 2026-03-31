@@ -10,7 +10,9 @@ import {
 import { createProgressCallback } from './progress-callback.js'
 
 function getRandom() {
-    return Math.floor(Math.random() * 5)
+    const ret = Math.floor(Math.random() * 5)
+    // Apparently the model has difficulty understanding scalar returns
+    return `The random number is ${ret}.`
 }
 
 getRandom.description = 'Returns a random integer between 0 and 4.'
@@ -29,7 +31,10 @@ async function main() {
                 `Use the provided "${getRandom.name}" function to generate a random integer between 0 and 4.`,
                 `You should follow this process:`,
                 `1. Call the function`,
-                `2. If the result is equal to 0, just return STOP otherwise just return the result.`,
+                `2. Get the response and returns one of the following strings based on the response:`,
+                `2.1. If the response is 0 return "STOP" and do **not** call the function again and end.`,
+                `2.2. Otherwise, return the number you got and call the function again.`,
+                `3. End when you get 0 and return "STOP".`,
             ].join('\n'),
         },
         {
