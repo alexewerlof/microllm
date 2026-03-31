@@ -17,7 +17,7 @@ This repository contains a small & lightweight LLM library using [Liquid.ai](htt
 - Never assume the type of variables and shape of objects that is coming from outside this code base: user code, dependencies, databases, AI generated, APIs, etc. Set the type to `unknown` and **ALWAYS** verify using 'jty'.
 - Verify the expectations close to where the value is used.
 - Do not double-verify the value (for performance reasons). If a value is not used in a code construct but rather passed to a another code construct, let the code that uses the value verify it and throw the exceptions accordingly.
-- Emit meaningful errors. Use the `cause` field when creating chained errors to include the context and additional information that's useful for debugging.
+- Emit meaningful errors. Use the `cause` field when creating chained errors to include the context and additional information that's useful for debugging. Exceptions traverse the boundaries of functions and this makes it hard to understand why an operation failed due to a seeminfly irrelevant exception from deeply nested function calls. Therefore, it's a good idea to try..catch an error in the middle layer of those calls and add extra context and rethrow a new error with the original error chain in the `cause`.
 - Use the `jty` library extensively to validate the types that you expect because although the code is written in TypeScript, it may be called with Javascript where typechecking is absent. Also when working with the Small Language Models we cannot be sure that they follow all the instructions. Always verify and fail with meaningful error messages that help you debug the issue and fix it.
 
 # Tests
