@@ -90,12 +90,12 @@ describe(tryParseAsToolCallsMessage.name, () => {
         assert.strictEqual(result!.tool_calls[0].function.name, 'search')
     })
 
-    test('returns null for regular text', () => {
-        assert.strictEqual(tryParseAsToolCallsMessage('Hello world'), null)
+    test('throws for regular text', () => {
+        assert.throws(() => tryParseAsToolCallsMessage('Hello world'), SyntaxError)
     })
 
-    test('returns null for text without special tokens', () => {
-        assert.strictEqual(tryParseAsToolCallsMessage('[get_time()]'), null)
+    test('throws for text without special tokens', () => {
+        assert.throws(() => tryParseAsToolCallsMessage('[get_time()]'), SyntaxError)
     })
 
     test('throws when start token is present but end token is missing', () => {

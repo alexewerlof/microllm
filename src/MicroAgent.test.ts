@@ -110,7 +110,7 @@ describe('MicroAgent', () => {
 
     test('strips tool call tokens from non-tool-call responses', async () => {
         const llm = new MicroChat(new PipelineFactory('text-generation', 'test-model'))
-        stubLLM(llm, ['<|tool_call_start|>It is noon.<|tool_call_end|>'])
+        stubLLM(llm, ['<|tool_call_start|>[It is noon.]<|tool_call_end|>'])
 
         const tools = new Tools()
         const agent = new MicroAgent(llm)
@@ -118,7 +118,7 @@ describe('MicroAgent', () => {
         const result = await agent.work({ messages, tools })
 
         const lastMessage = result[result.length - 1]
-        assert.strictEqual(lastMessage.content, 'It is noon.')
+        assert.strictEqual(lastMessage.content, '[It is noon.]')
     })
 
     test('converts existing tool call messages to Python format before calling the pipeline', async () => {

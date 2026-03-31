@@ -100,7 +100,7 @@ export function indexOfToolCallStartToken(rawAssistantResponse: string): number 
  * Returns null if the text does not contain a tool call start token.
  *
  * @param rawAssistantResponse The raw assistant response text.
- * @returns A ToolCallsMessage if a valid tool call is detected, or null otherwise.
+ * @returns A ToolCallsMessage if a valid tool call is detected
  * @throws {SyntaxError} If the start token is found but the end token is missing, or if brackets are missing.
  *
  * @example
@@ -109,11 +109,11 @@ export function indexOfToolCallStartToken(rawAssistantResponse: string): number 
  * tryParseAsToolCallsMessage('Hello world') // => null
  * ```
  */
-export function tryParseAsToolCallsMessage(rawAssistantResponse: string): ToolCallsMessage | null {
+export function tryParseAsToolCallsMessage(rawAssistantResponse: string): ToolCallsMessage {
     const startIdx = indexOfToolCallStartToken(rawAssistantResponse)
     if (startIdx === -1) {
         // If no start token is found, we assume there are no tool calls and it's a regular AssistantMessage.
-        return null
+        throw new SyntaxError(`Expected a tool call start token in the assistant response, but got: ${rawAssistantResponse}`)
     }
 
     const afterStartIdx = startIdx + TOOL_CALL_START_TOKEN.length
