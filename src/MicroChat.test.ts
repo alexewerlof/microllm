@@ -3,7 +3,7 @@ import { describe, test } from 'node:test'
 import { MicroChat } from './MicroChat.js'
 import { PipelineFactory } from './PipelineFactory.js'
 import { SupportedMessage } from './Message/types.js'
-import { FunctionToolDeclaration } from './Tools/FunctionTool.js'
+import { FunctionToolDeclaration } from './Tools/types.js'
 
 describe('MicroChat', () => {
     test('uses tokenizer chat templating with tools when native support is available', async () => {
