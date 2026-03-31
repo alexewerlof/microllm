@@ -11,6 +11,7 @@ async function main() {
         dtype: 'q4',
         progress_callback: createProgressCallback('Chat Pipeline'),
     })
+    await pipelineFactory.getPipeline()
     const microChat = new MicroChat(pipelineFactory)
     const messages: SupportedMessage[] = [
         {

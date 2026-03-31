@@ -20,6 +20,7 @@ async function main() {
         dtype: 'q4',
         progress_callback: createProgressCallback('Chat Pipeline'),
     })
+    await pipelineFactory.getPipeline() // Pre-load the model before starting the agent loop
     const llm = new MicroChat(pipelineFactory)
     const messages: SupportedMessage[] = [
         {

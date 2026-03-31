@@ -136,19 +136,19 @@ export class MicroChat {
      * const text = await llm.complete({ messages: [{ role: 'user', content: 'Hello' }] })
      *
      * // With tool definitions injected
-    * const tools: FunctionToolDeclaration[] = [{
-    *   type: 'function',
-    *   function: {
-    *     name: 'get_time',
-    *     description: 'Get the current time',
-    *     parameters: {
-    *       type: 'object',
-    *       properties: {},
-    *       required: [],
-    *       additionalProperties: false,
-    *     },
-    *   },
-    * }]
+     * const tools: FunctionToolDeclaration[] = [{
+     *   type: 'function',
+     *   function: {
+     *     name: 'get_time',
+     *     description: 'Get the current time',
+     *     parameters: {
+     *       type: 'object',
+     *       properties: {},
+     *       required: [],
+     *       additionalProperties: false,
+     *     },
+     *   },
+     * }]
      * const text = await llm.complete({ messages, tools })
      * ```
      */

@@ -92,14 +92,15 @@ export class MicroAgent {
             throw new TypeError(`Expected tools to be an instance of Tools, but got ${tools} (${typeof tools})`)
         }
 
+        console.debug(JSON.stringify(messages, null, 2))
         const results: SupportedMessage[] = []
         for (let iteration = 0; iteration < MicroAgent.MAX_TOOL_CALLS; iteration++) {
-            console.debug(results)
             const result = await this.#microChat.complete({
                 messages: [...messages, ...results],
                 tools: tools.toJSON(),
                 signal,
             })
+            console.debug(iteration, JSON.stringify(results, null, 2))
 
             if (isToolCallsMessage(result)) {
                 results.push(result)
