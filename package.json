@@ -30,6 +30,7 @@
         "lint": "eslint",
         "typecheck": "tsc --noEmit",
         "test": "node --import tsx --test",
+        "example": "node --import tsx",
         "doc": "typedoc src/index.ts",
         "prebuild": "rm -rf lib doc",
         "build": "tsup --dts && npm run doc",
