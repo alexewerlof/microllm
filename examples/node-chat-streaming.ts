@@ -1,8 +1,5 @@
-import { createUserMessage } from '../src/Message/factories'
-import { SupportedMessage } from '../src/Message/types'
-import { MicroChat } from '../src/MicroChat'
-import { PipelineFactory } from '../src/PipelineFactory'
-import { createProgressCallback } from './progress-callback'
+import { createUserMessage, SupportedMessage, MicroChat, PipelineFactory } from '../src/index.js'
+import { createProgressCallback } from './progress-callback.js'
 
 async function main() {
     const pipelineFactory = new PipelineFactory('text-generation', 'onnx-community/LFM2-1.2B-ONNX', {

@@ -1,6 +1,5 @@
-import { MicroEmbedder } from '../src/MicroEmbedder'
-import { PipelineFactory } from '../src/PipelineFactory'
-import { createProgressCallback } from './progress-callback'
+import { MicroEmbedder, PipelineFactory } from '../src/index.js'
+import { createProgressCallback } from './progress-callback.js'
 
 async function main() {
     const pipelineFactory = new PipelineFactory('feature-extraction', 'Xenova/all-MiniLM-L6-v2', {

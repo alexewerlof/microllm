@@ -1,9 +1,5 @@
-import { createUserMessage } from '../src/Message/factories'
-import { SupportedMessage } from '../src/Message/types'
-import { MicroChat } from '../src/MicroChat'
-import { PipelineFactory } from '../src/PipelineFactory'
-import { Tools } from '../src/Tools'
-import { createProgressCallback } from './progress-callback'
+import { createUserMessage, SupportedMessage, MicroChat, PipelineFactory, Tools } from '../src/index.js'
+import { createProgressCallback } from './progress-callback.js'
 
 async function main() {
     const pipelineFactory = new PipelineFactory('text-generation', 'onnx-community/LFM2-1.2B-Tool-ONNX', {
@@ -41,7 +37,7 @@ async function main() {
             if (assistantContent.content) {
                 console.log(assistantContent.content)
             } else {
-                console.dir(assistantContent, { depth: null }) 
+                console.dir(assistantContent, { depth: null })
             }
             messages.push(assistantContent)
         }

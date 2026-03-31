@@ -1,9 +1,5 @@
-import { MicroChat } from '../src/MicroChat'
-import { SupportedMessage } from '../src/Message/types'
-import { Tools } from '../src/Tools'
-import { MicroAgent } from '../src/MicroAgent'
-import { PipelineFactory } from '../src/PipelineFactory'
-import { createProgressCallback } from './progress-callback'
+import { MicroChat, SupportedMessage, Tools, MicroAgent, PipelineFactory } from '../src/index.js'
+import { createProgressCallback } from './progress-callback.js'
 
 function getTime() {
     console.log('------- inside getTime() -------')

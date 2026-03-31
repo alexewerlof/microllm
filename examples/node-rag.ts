@@ -1,13 +1,15 @@
-import { glob } from 'node:fs/promises'
+import { readFile, glob } from 'node:fs/promises'
 import { join, resolve } from 'node:path'
-import { createSystemMessage, createUserMessage } from '../src/Message/factories'
-import { SupportedMessage } from '../src/Message/types'
-import { MicroChat } from '../src/MicroChat'
-import { MicroEmbedder } from '../src/MicroEmbedder'
-import { MicroRAG } from '../src/MicroRAG'
-import { PipelineFactory } from '../src/PipelineFactory'
-import { readFile } from 'node:fs/promises'
-import { createProgressCallback } from './progress-callback'
+import {
+    createSystemMessage,
+    createUserMessage,
+    SupportedMessage,
+    MicroChat,
+    MicroEmbedder,
+    MicroRAG,
+    PipelineFactory,
+} from '../src/index.js'
+import { createProgressCallback } from './progress-callback.js'
 
 async function loadContents(): Promise<{ filePath: string; content: string }[]> {
     const ret = []

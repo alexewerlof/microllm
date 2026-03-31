@@ -1,11 +1,13 @@
-import { MicroChat } from '../src/MicroChat'
-import { SupportedMessage } from '../src/Message/types'
-import { Tools } from '../src/Tools'
-import { MicroAgent } from '../src/MicroAgent'
-import { isAssistantMessage } from '../src/Message/guards'
-import { createUserMessage } from '../src/Message/factories'
-import { PipelineFactory } from '../src/PipelineFactory'
-import { createProgressCallback } from './progress-callback'
+import {
+    MicroChat,
+    SupportedMessage,
+    Tools,
+    MicroAgent,
+    isAssistantMessage,
+    createUserMessage,
+    PipelineFactory,
+} from '../src/index.js'
+import { createProgressCallback } from './progress-callback.js'
 
 function getRandom() {
     return Math.floor(Math.random() * 5)
