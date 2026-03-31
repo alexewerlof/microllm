@@ -12,7 +12,7 @@ export interface FunctionToolBaseProperty {
 
 export const SUPPORTED_SIMPLE_TYPES = ['string', 'number', 'boolean'] as const
 
-export type SupportedSimpleType = typeof SUPPORTED_SIMPLE_TYPES[number]
+export type SupportedSimpleType = (typeof SUPPORTED_SIMPLE_TYPES)[number]
 
 export interface FunctionToolSimpleProperty extends FunctionToolBaseProperty {
     type: SupportedSimpleType
@@ -58,4 +58,3 @@ export interface FunctionToolDeclaration {
     /** The function descriptor. */
     function: FunctionToolDeclarationFunction
 }
-

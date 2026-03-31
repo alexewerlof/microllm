@@ -1,5 +1,16 @@
 import { isArr, isBool, isDef, isObj, isStr } from 'jty'
-import { FunctionToolArrayProperty, FunctionToolBaseProperty, FunctionToolDeclaration, FunctionToolDeclarationFunction, FunctionToolDeclarationParameters, FunctionToolProperties, FunctionToolProperty, FunctionToolSimpleProperty, SUPPORTED_SIMPLE_TYPES, SupportedSimpleType } from './types.js'
+import {
+    FunctionToolArrayProperty,
+    FunctionToolBaseProperty,
+    FunctionToolDeclaration,
+    FunctionToolDeclarationFunction,
+    FunctionToolDeclarationParameters,
+    FunctionToolProperties,
+    FunctionToolProperty,
+    FunctionToolSimpleProperty,
+    SUPPORTED_SIMPLE_TYPES,
+    SupportedSimpleType,
+} from './types.js'
 
 function isFunctionToolBaseProperty(obj: unknown): obj is FunctionToolBaseProperty {
     if (!isObj(obj)) {
@@ -22,7 +33,6 @@ function isFunctionToolBaseProperty(obj: unknown): obj is FunctionToolBaseProper
 
     return true
 }
-
 
 export function isSupportedSimpleType(value: unknown): value is SupportedSimpleType {
     return isStr(value) && SUPPORTED_SIMPLE_TYPES.includes(value as SupportedSimpleType)

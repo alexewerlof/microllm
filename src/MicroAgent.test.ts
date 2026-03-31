@@ -67,7 +67,7 @@ describe('MicroAgent', () => {
 
         const agent = new MicroAgent(llm)
         const messages: SupportedMessage[] = [{ role: 'user', content: 'What time is it?' }]
-    const result = await agent.work({ messages, tools })
+        const result = await agent.work({ messages, tools })
 
         assert.strictEqual(invoked, true)
         const lastMessage = result[result.length - 1]
@@ -88,7 +88,7 @@ describe('MicroAgent', () => {
 
         const agent = new MicroAgent(llm)
         const messages: SupportedMessage[] = [{ role: 'user', content: 'What time is it?' }]
-    const result = await agent.work({ messages, tools })
+        const result = await agent.work({ messages, tools })
 
         assert.strictEqual(invoked, false)
         const lastMessage = result[result.length - 1]

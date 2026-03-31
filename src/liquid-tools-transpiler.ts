@@ -87,7 +87,9 @@ export function parsePythonToolCallObj(text: string): ToolCallObj[] {
 
 export function indexOfToolCallStartToken(rawAssistantResponse: string): number {
     if (!isStr(rawAssistantResponse)) {
-        throw new TypeError(`Expected assistant response to be a string, but got ${rawAssistantResponse} (${typeof rawAssistantResponse})`)
+        throw new TypeError(
+            `Expected assistant response to be a string, but got ${rawAssistantResponse} (${typeof rawAssistantResponse})`,
+        )
     }
     return rawAssistantResponse.indexOf(TOOL_CALL_START_TOKEN)
 }
@@ -117,13 +119,17 @@ export function tryParseAsToolCallsMessage(rawAssistantResponse: string): ToolCa
     const afterStartIdx = startIdx + TOOL_CALL_START_TOKEN.length
     const endIdx = rawAssistantResponse.indexOf(TOOL_CALL_END_TOKEN, afterStartIdx)
     if (endIdx === -1) {
-        throw new SyntaxError(`Found ${TOOL_CALL_START_TOKEN} but missing ${TOOL_CALL_END_TOKEN} in ${rawAssistantResponse}`)
+        throw new SyntaxError(
+            `Found ${TOOL_CALL_START_TOKEN} but missing ${TOOL_CALL_END_TOKEN} in ${rawAssistantResponse}`,
+        )
     }
 
     const inner = rawAssistantResponse.substring(afterStartIdx, endIdx).trim()
 
     if (!inner.startsWith('[') || !inner.endsWith(']')) {
-        throw new SyntaxError(`Expected tool call to be wrapped in brackets, but got: ${inner} in ${rawAssistantResponse}`)
+        throw new SyntaxError(
+            `Expected tool call to be wrapped in brackets, but got: ${inner} in ${rawAssistantResponse}`,
+        )
     }
 
     const toolCallObjs = parsePythonToolCallObj(inner)
@@ -163,7 +169,7 @@ function toolCallObjArgumentsToStr(argStr?: string): string {
 function toolCallsMessageToPython(toolCallsMessage: ToolCallsMessage): AssistantMessage {
     const content = toolCallsMessage.tool_calls
         .filter(isToolCallObj)
-        .map(({ function: { name, arguments: argStr }}) => `${name}(${toolCallObjArgumentsToStr(argStr)})`)
+        .map(({ function: { name, arguments: argStr } }) => `${name}(${toolCallObjArgumentsToStr(argStr)})`)
         .join(',')
 
     return createAssistantMessage(`${TOOL_CALL_START_TOKEN}[${content}]${TOOL_CALL_END_TOKEN}`)

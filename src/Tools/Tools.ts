@@ -36,10 +36,7 @@ export class Tools {
             if (!tool) {
                 throw new Error(`No tool found with the name "${name}"`)
             }
-            return createToolResultMessage(
-                id,
-                await tool.invoke(argsStr),
-            )
+            return createToolResultMessage(id, await tool.invoke(argsStr))
         } catch (error) {
             return createToolResultMessage(
                 id,
