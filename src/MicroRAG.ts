@@ -84,14 +84,14 @@ export class MicroRAG {
             return undefined
         }
         // See the expected format here: https://docs.liquid.ai/lfm/models/lfm2-1.2b-rag
-        const ragSystemPrompLines = [
+        const ragSystemPromptLines = [
             'The following documents may provide you additional information to answer questions:',
         ]
         for (let i = 0; i < relevantContext.length; i++) {
             const { text, metadata } = relevantContext[i]
             const tagName = `document${i + 1}`
-            ragSystemPrompLines.push(`<${tagName} metadata=${JSON.stringify(metadata)}>\n${text}\n</${tagName}>`)
+            ragSystemPromptLines.push(`<${tagName} metadata=${JSON.stringify(metadata)}>\n${text}\n</${tagName}>`)
         }
-        return createSystemMessage(ragSystemPrompLines.join('\n\n'))
+        return createSystemMessage(ragSystemPromptLines.join('\n\n'))
     }
 }
