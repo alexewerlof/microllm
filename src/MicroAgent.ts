@@ -66,8 +66,7 @@ export class MicroAgent {
      *
      * All tool call and result messages are returned as a new array.
      *
-     * @param messages The conversation messages array (mutated in place).
-     * @param tools The tools available for the agent to call.
+     * @param params The parameters for the work method, including messages, tools, and an optional abort signal.
      * @returns The new messages that are generated as a result of work. The caller can choose to append these to the original messages array or handle them separately.
      * @throws {Error} If maximum consecutive tool calls is exceeded.
      *

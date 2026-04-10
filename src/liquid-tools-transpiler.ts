@@ -113,7 +113,9 @@ export function tryParseAsToolCallsMessage(rawAssistantResponse: string): ToolCa
     const startIdx = indexOfToolCallStartToken(rawAssistantResponse)
     if (startIdx === -1) {
         // If no start token is found, we assume there are no tool calls and it's a regular AssistantMessage.
-        throw new SyntaxError(`Expected a tool call start token in the assistant response, but got: ${rawAssistantResponse}`)
+        throw new SyntaxError(
+            `Expected a tool call start token in the assistant response, but got: ${rawAssistantResponse}`,
+        )
     }
 
     const afterStartIdx = startIdx + TOOL_CALL_START_TOKEN.length

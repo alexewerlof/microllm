@@ -238,7 +238,10 @@ export class MicroChat {
             return tryParseAsToolCallsMessage(rawAssistantContent)
         } catch (cause) {
             // If parsing fails, we fall back to regular assistant message
-            console.trace('Failed to parse tool call from assistant response, falling back to regular assistant message.', { cause })
+            console.trace(
+                'Failed to parse tool call from assistant response, falling back to regular assistant message.',
+                { cause },
+            )
         }
 
         // Second pass: decode stripping special tokens for clean text

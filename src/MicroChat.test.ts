@@ -88,8 +88,7 @@ describe('MicroChat', () => {
             () => llm.complete({ messages: [{ role: 'user', content: 'Hello' }], tools: {} as never }),
             {
                 name: 'TypeError',
-                message:
-                    'Expected tools to be an array of FunctionToolDeclaration objects, but got {} (object)',
+                message: 'Expected tools to be an array of FunctionToolDeclaration objects, but got {} (object)',
             },
         )
     })
