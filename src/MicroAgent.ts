@@ -1,4 +1,4 @@
-import { isA, isArr, isObj } from 'jty'
+import { isInstance, isArr, isObj } from 'jty'
 import { Tools } from './Tools/index.js'
 import { MicroChat } from './MicroChat.js'
 import { SupportedMessage } from './Message/types.js'
@@ -42,7 +42,7 @@ export class MicroAgent {
      * @throws {TypeError} If microChat is not an instance of MicroChat.
      */
     constructor(microChat: MicroChat) {
-        if (!isA(microChat, MicroChat)) {
+        if (!isInstance(microChat, MicroChat)) {
             throw new TypeError(
                 `Expected microChat to be an instance of MicroChat. Got ${microChat} (${typeof microChat})`,
             )
@@ -87,7 +87,7 @@ export class MicroAgent {
         if (!isArr(messages)) {
             throw new TypeError(`Expected messages to be an array, but got ${messages} (${typeof messages})`)
         }
-        if (!isA(tools, Tools)) {
+        if (!isInstance(tools, Tools)) {
             throw new TypeError(`Expected tools to be an instance of Tools, but got ${tools} (${typeof tools})`)
         }
 

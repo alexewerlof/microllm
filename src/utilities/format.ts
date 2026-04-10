@@ -93,7 +93,6 @@ export function durL10n(
     const duration = millisecondsToDurationParts(milliseconds)
 
     try {
-        // @ts-expect-error -- DurationFormat is not yet in TypeScript's libdefs
         const formatter = new Intl.DurationFormat(locale, options)
         return formatter.format(duration)
     } catch {

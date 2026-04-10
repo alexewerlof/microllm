@@ -1,5 +1,5 @@
 import { StoppingCriteria, StoppingCriteriaList } from '@huggingface/transformers'
-import { isA } from 'jty'
+import { isInstance } from 'jty'
 
 /**
  * Custom stopping criteria that halts LLM text generation when an AbortSignal is specifically triggered.
@@ -16,7 +16,7 @@ export class SignalStoppingCriteria extends StoppingCriteria {
      */
     constructor(signal: AbortSignal) {
         super()
-        if (!isA(signal, AbortSignal)) {
+        if (!isInstance(signal, AbortSignal)) {
             throw new TypeError(`Expected signal to be an AbortSignal, but got ${signal} (${typeof signal})`)
         }
         this.#signal = signal
@@ -33,7 +33,7 @@ export class SignalStoppingCriteria extends StoppingCriteria {
     }
 
     static createStoppingCriteriaList(signal: AbortSignal): StoppingCriteriaList {
-        if (!isA(signal, AbortSignal)) {
+        if (!isInstance(signal, AbortSignal)) {
             throw new TypeError(`Expected signal to be an AbortSignal, but got ${signal} (${typeof signal})`)
         }
         const stoppingCriteriaList = new StoppingCriteriaList()

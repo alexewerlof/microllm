@@ -1,4 +1,4 @@
-import { isStr, isA, isDef, isPOJO } from 'jty'
+import { isStr, isInstance, isDef, isPOJO } from 'jty'
 import { VectorStore, VectorStoreQueryResult } from './VectorStore.js'
 import { MicroEmbedder } from './MicroEmbedder.js'
 import { headerChunk } from './utilities/chunking.js'
@@ -22,13 +22,13 @@ export class MicroRAG {
      * @throws {TypeError} If vectorStore is not an instance of VectorStore.
      */
     constructor(embedder: MicroEmbedder, vectorStore: VectorStore = new VectorStore()) {
-        if (!isA(embedder, MicroEmbedder)) {
+        if (!isInstance(embedder, MicroEmbedder)) {
             throw new TypeError(
                 `Expected MicroEmbedder instance for embedder, but got ${embedder} (${typeof embedder})`,
             )
         }
 
-        if (!isA(vectorStore, VectorStore)) {
+        if (!isInstance(vectorStore, VectorStore)) {
             throw new TypeError(
                 `Expected VectorStore instance for vectorStore, but got ${vectorStore} (${typeof vectorStore})`,
             )

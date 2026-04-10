@@ -1,4 +1,4 @@
-import { hasProp, inArr, isArr, isArrLen, isObj, isStr } from 'jty'
+import { hasProp, inArr, isArr, isArrLen, isPOJO, isStr } from 'jty'
 import {
     AssistantMessage,
     MessageRole,
@@ -92,7 +92,7 @@ export function isToolCallsMessage(x: unknown): x is ToolCallsMessage {
  * @returns True if valid structurally, false otherwise.
  */
 export function isToolCallObj(x: unknown): x is ToolCallObj {
-    if (!isObj(x)) {
+    if (!isPOJO(x)) {
         return false
     }
     return (
