@@ -238,14 +238,14 @@ export class MicroChat {
             return tryParseAsToolCallsMessage(rawAssistantContent)
         } catch {
             // If parsing fails, we fall back to regular assistant message
-           const cleanAssistantText = decodeAssistantText(
-               pipelineInstance.tokenizer,
-               outputTokenIds as Tensor,
-               inputs.input_ids as Tensor,
-               true,
-           )
-   
-           return createAssistantMessage(cleanAssistantText)
+            const cleanAssistantText = decodeAssistantText(
+                pipelineInstance.tokenizer,
+                outputTokenIds as Tensor,
+                inputs.input_ids as Tensor,
+                true,
+            )
+
+            return createAssistantMessage(cleanAssistantText)
         }
     }
 }

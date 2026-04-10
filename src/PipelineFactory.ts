@@ -21,8 +21,8 @@ import { pipelineProgressConsoleReporter } from './utilities/download.js'
 /**
  * Shared ONNX runtime configuration.
  * Detects the execution environment and configures the appropriate backend:
- *   - Node.js → onnxruntime-node + filesystem cache
- *   - Browser → built-in WebGPU/WASM (handled by transformers.js)
+ *   - Node.js → CPU device + filesystem cache
+ *   - Browser → built-in WebGPU/WASM selection
  *
  * All downstream modules (model.js, Embedder.js) import from here
  * so environment setup runs exactly once.
@@ -33,17 +33,7 @@ import { pipelineProgressConsoleReporter } from './utilities/download.js'
  */
 async function getDevice(): Promise<'webgpu' | 'wasm' | 'cpu'> {
     if (hasPath(globalThis, 'process', 'versions', 'node')) {
-        console.debug('Running in Node.js environment, configuring ONNX Runtime for Node')
-        try {
-            // Dynamic import prevents bundlers from resolving onnxruntime-node in browser builds.
-            const ort = await import('onnxruntime-node')
-            env.backends.onnx.runtime = ort.default ?? ort
-        } catch (error) {
-            throw new Error(
-                'Node.js usage requires the optional peer dependency "onnxruntime-node". Install it with "npm i onnxruntime-node".',
-                { cause: error },
-            )
-        }
+        console.debug('Running in Node.js environment, using transformers.js ONNX runtime selection')
         env.cacheDir = './.cache'
         return 'cpu'
     }

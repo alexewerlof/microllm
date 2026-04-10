@@ -42,7 +42,7 @@ Implement Retrieval-Augmented Generation (RAG) with ease using:
 
 ## Implementation Details
 
-- **Powered by Hugging Face**: Built on [@huggingface/transformers.js](https://www.npmjs.com/package/@huggingface/transformers), which utilizes the [ONNX](https://onnxruntime.ai/) runtime.
+- **Powered by Hugging Face**: Built on [@huggingface/transformers.js](https://www.npmjs.com/package/@huggingface/transformers), which automatically manages the [ONNX](https://onnxruntime.ai/) runtime for both Node.js and browser environments. No additional runtime installation required.
 - **Customizable**: Unlike other libraries, MicroLLM doesn't abstract away Hugging Face, allowing you to tweak settings as needed.
 - **Automatic Caching**: Handles caching seamlessly in both Node.js and browser environments.
 - **Model Support**: Currently supports the latest LiquidFM, with plans to add more small models in the future.
@@ -53,12 +53,6 @@ Install MicroLLM via npm:
 
 ```bash
 npm i microllm
-```
-
-If you are running MicroLLM in Node.js, install the optional ONNX runtime as well:
-
-```bash
-npm i microllm onnxruntime-node
 ```
 
 ## Usage
@@ -73,7 +67,7 @@ Explore the [examples](examples/) directory to see MicroLLM in action:
 Run the node examples using `tsx` for example:
 
 ```bash
-node --loader tsx examples/node-rag.ts
+node --import tsx examples/node-chat-streaming.ts
 ```
 
 There's also a [web chat demo](examples/web/chat/index.html). Note that `wasm` is very slow and even if you do have `webgpu`, it might still be using a software fallback. You can check your browser's [Web GPU support](https://webgpureport.org/) and look at the detected `architecture`:
