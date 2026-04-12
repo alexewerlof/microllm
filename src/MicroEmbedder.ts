@@ -1,5 +1,7 @@
-import { FeatureExtractionPipelineOptions } from '@huggingface/transformers'
+import { FeatureExtractionPipeline } from '@huggingface/transformers'
 import { PipelineFactory } from './PipelineFactory.js'
+
+type EmbedOptions = NonNullable<Parameters<FeatureExtractionPipeline['_call']>[1]>
 
 /**
  * Generates embeddings using a caller-owned feature-extraction pipeline factory.
@@ -28,7 +30,7 @@ export class MicroEmbedder {
      */
     async embed(
         text: string,
-        options: FeatureExtractionPipelineOptions = {
+        options: EmbedOptions = {
             pooling: 'mean',
             normalize: true,
         },

@@ -39,7 +39,7 @@ export function isMessage(x: unknown): x is Message {
     if (!isMessageRole(x)) {
         return false
     }
-    return hasProp(x, 'content') && isStr(x.content)
+    return hasProp(x, 'content') && (isStr(x.content) || isArr(x.content))
 }
 
 /**

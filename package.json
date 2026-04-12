@@ -53,7 +53,7 @@
         "tool-calling"
     ],
     "dependencies": {
-        "@huggingface/transformers": "^3.8.1",
+        "@huggingface/transformers": "^4.0.1",
         "jty": "^6.1.6"
     },
     "devDependencies": {

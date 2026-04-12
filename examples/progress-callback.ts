@@ -1,55 +1,38 @@
 import { ProgressCallback, ProgressInfo } from '@huggingface/transformers'
-import cliProgress from 'cli-progress'
+import { SingleBar } from 'cli-progress'
+import { bytesToHumanReadable } from '../src/utilities/format.js'
 
 export function createProgressCallback(task: string = ''): ProgressCallback {
-    const cliProgressContainer = new cliProgress.MultiBar(
-        {
-            format: task + ` > {name} {bar} {file} | Progress: {percentage}% | Remaining: {eta_formatted}`,
-            stopOnComplete: true,
-            hideCursor: false,
-        },
-        cliProgress.Presets.shades_grey,
-    )
+    const progressBar = new SingleBar({
+        format: `${task} pipeline {loadedHuman} of {totalHuman} {bar} | {percentage}%`,
+        fps: 10,
+        barCompleteChar: '\u2588',
+        barIncompleteChar: '\u2591',
+    })
 
-    const files: {
-        [name: string]: {
-            [file: string]: cliProgress.SingleBar
-        }
-    } = {}
+    let isInitialized = false
 
-    function getBar({ name, file }: { name: string; file: string }): cliProgress.SingleBar {
-        if (!files[name]) {
-            files[name] = {}
-        }
-        if (!files[name][file]) {
-            files[name][file] = cliProgressContainer.create(100, 0, { name, file })
-        }
-        return files[name][file]
-    }
-
-    return (progressInfo: ProgressInfo) => {
-        switch (progressInfo.status) {
-            case 'initiate':
-                getBar(progressInfo).start(100, 0, progressInfo)
-                break
-            case 'download':
-                getBar(progressInfo).start(100, 0, progressInfo)
-                break
-            case 'progress':
-                getBar(progressInfo).update(progressInfo.progress, progressInfo)
-                break
-            case 'done':
+    return (p: ProgressInfo) => {
+        
+        switch (p.status) {
+            case 'progress_total':
                 {
-                    const bar = getBar(progressInfo)
-                    bar.update(bar.getTotal(), progressInfo)
-                    bar.stop()
+                    const payload = {
+                        ...p,
+                        loadedHuman: bytesToHumanReadable(p.loaded),
+                        totalHuman: bytesToHumanReadable(p.total),
+                    }
+                    if (isInitialized) {
+                        progressBar.update(p.loaded, payload)
+                    } else {
+                        progressBar.start(p.total, p.loaded, payload)
+                        isInitialized = true
+                    }
                 }
                 break
             case 'ready':
-                cliProgressContainer.stop()
+                progressBar.stop()
                 break
-            default:
-                console.warn(`Progress event with unknown status: ${JSON.stringify(progressInfo)}`)
         }
     }
 }

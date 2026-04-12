@@ -1,7 +1,5 @@
 import { isFin, isNum } from 'jty'
 
-// -- Intl.DurationFormat is not yet in TypeScript's lib definitions --
-
 interface DurationParts {
     hours: number
     minutes: number
@@ -10,6 +8,14 @@ interface DurationParts {
 
 interface DurationFormatOptions {
     style?: 'long' | 'short' | 'narrow' | 'digital'
+}
+
+type DurationFormatter = {
+    format: (duration: DurationParts) => string
+}
+
+type IntlWithDurationFormat = typeof Intl & {
+    DurationFormat?: new (locale?: string, options?: DurationFormatOptions) => DurationFormatter
 }
 
 // -- Constants --
@@ -91,9 +97,14 @@ export function durL10n(
     }
 
     const duration = millisecondsToDurationParts(milliseconds)
+    const durationFormatCtor = (Intl as IntlWithDurationFormat).DurationFormat
+
+    if (typeof durationFormatCtor !== 'function') {
+        return formatDurationFallback(duration)
+    }
 
     try {
-        const formatter = new Intl.DurationFormat(locale, options)
+        const formatter = new durationFormatCtor(locale, options)
         return formatter.format(duration)
     } catch {
         return formatDurationFallback(duration)

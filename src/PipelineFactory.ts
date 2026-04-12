@@ -16,6 +16,12 @@ import { pipelineProgressConsoleReporter } from './utilities/download.js'
  * firing the "initiated" -> "download" -> "progress" (instantly 100%) -> "done" events.
  * Specify a custom location for models (defaults to '/models/').
  * env.localModelPath = "/huggingface";
+ * 
+ * Enable WASM Caching for offline-first scenarios
+ * env.useWasmCache = true;
+ * 
+ * Add to suppress ONNX Runtime warnings and console noise.
+ * env.logLevel = 'error'
  */
 
 /**

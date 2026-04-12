@@ -1,4 +1,6 @@
-import { Message, StoppingCriteriaList, Tensor, TextGenerationConfig, TextStreamer } from '@huggingface/transformers'
+import { Message, StoppingCriteriaList, Tensor, TextGenerationPipeline, TextStreamer } from '@huggingface/transformers'
+
+type TextGenerationOptions = NonNullable<Parameters<TextGenerationPipeline['_call']>[1]>
 import { PipelineFactory } from './PipelineFactory.js'
 import { isArr, isDef, isObj, isPOJO, isStr } from 'jty'
 import { normalizeMessageArray } from './utilities/normalization.js'
@@ -8,7 +10,7 @@ import { SupportedMessage } from './Message/types.js'
 import { createAssistantMessage } from './Message/factories.js'
 import { convertSupportedMessagesToLiquidMessages, tryParseAsToolCallsMessage } from './liquid-tools-transpiler.js'
 
-const defaultTextGenerationConfig: Partial<TextGenerationConfig> = {
+const defaultTextGenerationConfig: Partial<TextGenerationOptions> = {
     max_new_tokens: 512,
     temperature: 0.5,
     top_p: 0.5,
@@ -18,7 +20,7 @@ export interface MicroChatCompleteParams {
     /** The conversation messages. */
     messages: SupportedMessage[]
     /** Optional text generation config like temperature, top_p, etc. */
-    config?: Partial<TextGenerationConfig>
+    config?: Partial<TextGenerationOptions>
     /** Optional abort signal. */
     signal?: AbortSignal
     /** Optional tool declarations whose schemas are injected into the prompt. */
@@ -178,7 +180,7 @@ export class MicroChat {
             }
         }
 
-        const textGenerationConfig: Partial<TextGenerationConfig> = {
+        const textGenerationConfig: Partial<TextGenerationOptions> = {
             ...defaultTextGenerationConfig,
             ...config,
         }
