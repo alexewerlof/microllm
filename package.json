@@ -54,7 +54,7 @@
     ],
     "dependencies": {
         "@huggingface/transformers": "^4.0.1",
-        "jty": "^6.1.6"
+        "jty": "^6.2.0"
     },
     "devDependencies": {
         "@eslint/js": "^10.0.1",
