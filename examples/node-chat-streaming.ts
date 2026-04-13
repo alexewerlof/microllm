@@ -1,4 +1,4 @@
-import { createUserMessage, SupportedMessage, MicroChat, PipelineFactory } from '../src/index.js'
+import { createUserMessage, SupportedMessage, MicroChat, PipelineFactory, LiquidAdapter } from '../src/index.js'
 import { createProgressCallback } from './progress-callback.js'
 
 async function main() {
@@ -6,7 +6,9 @@ async function main() {
         dtype: 'q4',
         progress_callback: createProgressCallback('Chat Pipeline'),
     })
-    const llm = new MicroChat(pipelineFactory)
+    const llm = new MicroChat(pipelineFactory, new LiquidAdapter())
+
+    await pipelineFactory.getPipeline()
 
     const messages: SupportedMessage[] = [
         {

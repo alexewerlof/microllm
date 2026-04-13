@@ -7,8 +7,9 @@ import { normalizeMessageArray } from './utilities/normalization.js'
 import { SignalStoppingCriteria } from './utilities/SignalStoppingCriteria.js'
 import { FunctionToolDeclaration, isFunctionToolDeclaration } from './Tools/index.js'
 import { SupportedMessage } from './Message/types.js'
-import { createAssistantMessage } from './Message/factories.js'
-import { convertSupportedMessagesToLiquidMessages, tryParseAsToolCallsMessage } from './liquid-tools-transpiler.js'
+import { isChatModelAdapter } from './adapters/guards.js'
+import { ChatModelAdapter } from './adapters/types.js'
+import { LiquidAdapter } from './adapters/LiquidAdapter.js'
 
 const defaultTextGenerationConfig: Partial<TextGenerationOptions> = {
     max_new_tokens: 512,
@@ -109,6 +110,7 @@ function _printDecodePromptText(
 
 export class MicroChat {
     pipelineFactory: PipelineFactory<'text-generation'>
+    adapter: ChatModelAdapter
 
     /**
      * Creates a chat instance from a pre-configured text generation pipeline factory.
@@ -122,8 +124,14 @@ export class MicroChat {
      * const llm = new MicroChat(factory)
      * ```
      */
-    constructor(pipelineFactory: PipelineFactory<'text-generation'>) {
+    constructor(pipelineFactory: PipelineFactory<'text-generation'>, adapter: ChatModelAdapter = new LiquidAdapter()) {
         this.pipelineFactory = pipelineFactory
+
+        if (!isChatModelAdapter(adapter)) {
+            throw new TypeError(`Expected adapter to expose onBeforeChatTemplate() and onAfterDecode(), but got ${adapter} (${typeof adapter})`)
+        }
+
+        this.adapter = adapter
     }
 
     /**
@@ -208,13 +216,33 @@ export class MicroChat {
         }
 
         const supportedMessages = [...messages]
+        const prepared = this.adapter.onBeforeChatTemplate({
+            messages: supportedMessages,
+            tools,
+        })
 
-        const prepared: Message[] = convertSupportedMessagesToLiquidMessages(supportedMessages)
+        if (!isObj(prepared)) {
+            throw new TypeError(
+                `Expected ${this.adapter.name}.onBeforeChatTemplate(...) to return an object, but got ${prepared} (${typeof prepared})`,
+            )
+        }
 
-        const normalizedMessages = normalizeMessageArray(prepared)
+        if (!isArr(prepared.messages)) {
+            throw new TypeError(
+                `Expected ${this.adapter.name}.onBeforeChatTemplate(...).messages to be an array, but got ${prepared.messages} (${typeof prepared.messages})`,
+            )
+        }
+
+        if (!isPOJO(prepared.templateOptions)) {
+            throw new TypeError(
+                `Expected ${this.adapter.name}.onBeforeChatTemplate(...).templateOptions to be an object, but got ${prepared.templateOptions} (${typeof prepared.templateOptions})`,
+            )
+        }
+
+        const normalizedMessages = normalizeMessageArray(prepared.messages as Message[])
 
         const inputs = pipelineInstance.tokenizer.apply_chat_template(normalizedMessages, {
-            tools,
+            ...prepared.templateOptions,
             add_generation_prompt: true,
             return_dict: true,
         }) as Record<string, unknown>
@@ -236,18 +264,16 @@ export class MicroChat {
             false,
         )
 
-        try {
-            return tryParseAsToolCallsMessage(rawAssistantContent)
-        } catch {
-            // If parsing fails, we fall back to regular assistant message
-            const cleanAssistantText = decodeAssistantText(
-                pipelineInstance.tokenizer,
-                outputTokenIds as Tensor,
-                inputs.input_ids as Tensor,
-                true,
-            )
+        const cleanAssistantText = decodeAssistantText(
+            pipelineInstance.tokenizer,
+            outputTokenIds as Tensor,
+            inputs.input_ids as Tensor,
+            true,
+        )
 
-            return createAssistantMessage(cleanAssistantText)
-        }
+        return this.adapter.onAfterDecode({
+            rawAssistantContent,
+            cleanAssistantContent: cleanAssistantText,
+        })
     }
 }

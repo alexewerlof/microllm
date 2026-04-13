@@ -1,19 +1,21 @@
-import { describe, test } from 'node:test'
 import assert from 'node:assert/strict'
-import {
+import { describe, test } from 'node:test'
+import { _test, LiquidAdapter } from './LiquidAdapter.js'
+
+const {
     convertSupportedMessagesToLiquidMessages,
     parsePythonToolCallObj,
     stripToolCallTokens,
     tryParseAsToolCallsMessage,
-} from './liquid-tools-transpiler.js'
+} = _test
 
-describe(stripToolCallTokens.name, () => {
+describe(_test.stripToolCallTokens.name, () => {
     test('removes the special tokens', () => {
         assert.strictEqual(stripToolCallTokens('Hello <|tool_call_start|>world<|tool_call_end|>!'), 'Hello world!')
     })
 })
 
-describe(parsePythonToolCallObj.name, () => {
+describe(_test.parsePythonToolCallObj.name, () => {
     test('parses a valid tool call', () => {
         const result = parsePythonToolCallObj('[my_function(arg1="value1", arg2=\'value2\')]')
         assert.strictEqual(result.length, 1)
@@ -74,20 +76,18 @@ describe(parsePythonToolCallObj.name, () => {
     })
 })
 
-describe(tryParseAsToolCallsMessage.name, () => {
+describe(_test.tryParseAsToolCallsMessage.name, () => {
     test('parses a tool call wrapped in special tokens', () => {
         const result = tryParseAsToolCallsMessage('<|tool_call_start|>[get_time()]<|tool_call_end|>')
-        assert.notStrictEqual(result, null)
-        assert.strictEqual(result!.role, 'assistant')
-        assert.strictEqual(result!.tool_calls[0].function.name, 'get_time')
+        assert.strictEqual(result.role, 'assistant')
+        assert.strictEqual(result.tool_calls[0].function.name, 'get_time')
     })
 
     test('parses a tool call with surrounding text', () => {
         const result = tryParseAsToolCallsMessage(
             '<|tool_call_start|>[search(query="hello")]<|tool_call_end|>\nSearching for hello.',
         )
-        assert.notStrictEqual(result, null)
-        assert.strictEqual(result!.tool_calls[0].function.name, 'search')
+        assert.strictEqual(result.tool_calls[0].function.name, 'search')
     })
 
     test('throws for regular text', () => {
@@ -108,8 +108,7 @@ describe(tryParseAsToolCallsMessage.name, () => {
 
     test('parses a tool call with arguments', () => {
         const result = tryParseAsToolCallsMessage('<|tool_call_start|>[search(query="hello")]<|tool_call_end|>')
-        assert.notStrictEqual(result, null)
-        const args = JSON.parse(result!.tool_calls[0].function.arguments)
+        const args = JSON.parse(result.tool_calls[0].function.arguments)
         assert.strictEqual(args.query, 'hello')
     })
 
@@ -122,7 +121,7 @@ describe(tryParseAsToolCallsMessage.name, () => {
     })
 })
 
-describe(convertSupportedMessagesToLiquidMessages.name, () => {
+describe(_test.convertSupportedMessagesToLiquidMessages.name, () => {
     test('converts tool call messages into python-style assistant content', () => {
         const result = convertSupportedMessagesToLiquidMessages([
             {
@@ -134,5 +133,21 @@ describe(convertSupportedMessagesToLiquidMessages.name, () => {
         assert.deepStrictEqual(result, [
             { role: 'assistant', content: '<|tool_call_start|>[get_time()]<|tool_call_end|>' },
         ])
+    })
+})
+
+describe(LiquidAdapter.name, () => {
+    test('returns assistant message when output has no tool call tokens', () => {
+        const adapter = new LiquidAdapter()
+
+        const message = adapter.onAfterDecode({
+            rawAssistantContent: 'Regular answer',
+            cleanAssistantContent: 'Regular answer',
+        })
+
+        assert.deepStrictEqual(message, {
+            role: 'assistant',
+            content: 'Regular answer',
+        })
     })
 })

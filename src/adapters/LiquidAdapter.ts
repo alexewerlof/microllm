@@ -1,43 +1,50 @@
-import { isArr, isDef, isPOJO, isStr } from 'jty'
-import { AssistantMessage, SupportedMessage, ToolCallObj, ToolCallsMessage } from './Message/types.js'
-import { isSupportedMessage, isToolCallObj, isToolCallsMessage } from './Message/guards.js'
 import { Message } from '@huggingface/transformers'
-import { createAssistantMessage } from './Message/factories.js'
+import { isArr, isDef, isPOJO, isStr } from 'jty'
+import { createAssistantMessage } from '../Message/factories.js'
+import { isSupportedMessage, isToolCallObj, isToolCallsMessage } from '../Message/guards.js'
+import { AssistantMessage, SupportedMessage, ToolCallObj, ToolCallsMessage } from '../Message/types.js'
+import { AfterDecodeParams, BeforeChatTemplateParams, BeforeChatTemplateResult, ChatModelAdapter } from './types.js'
 
 const TOOL_CALL_START_TOKEN = '<|tool_call_start|>'
 const TOOL_CALL_END_TOKEN = '<|tool_call_end|>'
 
 /**
  * Removes tool call start and end tokens from a text string.
- * This handles cases where models leak these special tokens into the final generated text.
  *
  * @param text The generated text from the LLM.
- * @returns The text with tool call tokens removed, or the original input if not a string.
+ * @returns The text with tool call tokens removed.
+ *
+ * @example
+ * ```ts
+ * stripToolCallTokens('Hello <|tool_call_start|>world<|tool_call_end|>!')
+ * ```
  */
-export function stripToolCallTokens(text: string): string {
+function stripToolCallTokens(text: string): string {
     if (!isStr(text)) return text
     return text.replaceAll(TOOL_CALL_START_TOKEN, '').replaceAll(TOOL_CALL_END_TOKEN, '')
 }
 
-export function generateRandomToolCallId(): string {
+function generateRandomToolCallId(): string {
     return 'call_' + Math.random().toString(36).substring(2, 9)
 }
 
 /**
- * Parses Python-style tool call strings (e.g., `[function_name(arg1="value1")]`) into OpenAI-compatible tool call objects.
- * @todo currently this doesn't support multiple function calls
- * @todo currently we don't support values that are objects or arrays
+ * Parses Python-style tool call strings into OpenAI-compatible tool call objects.
+ *
  * @param text The raw generated text that might contain a tool call.
- * @returns An array containing a single tool call object if parsing succeeds, or null if it's not a valid tool call.
+ * @returns Parsed tool calls.
+ *
+ * @example
+ * ```ts
+ * parsePythonToolCallObj('[get_time()]')
+ * ```
  */
-export function parsePythonToolCallObj(text: string): ToolCallObj[] {
+function parsePythonToolCallObj(text: string): ToolCallObj[] {
     if (!isStr(text)) {
         throw new TypeError(`Expected text to be a string, but got ${text} (${typeof text})`)
     }
 
     text = text.trim()
-
-    // Fallback: If it has special tokens, strip them
     text = stripToolCallTokens(text).trim()
 
     if (!text.startsWith('[') || !text.endsWith(']')) {
@@ -51,24 +58,22 @@ export function parsePythonToolCallObj(text: string): ToolCallObj[] {
     }
 
     const [, functionName, argsStr] = match
-
-    const PYTHON_TO_JS: Record<string, boolean | null> = { True: true, False: false, None: null }
-
+    const pythonToJs: Record<string, boolean | null> = { True: true, False: false, None: null }
     const args: Record<string, unknown> = {}
+
     if (argsStr.trim().length > 0) {
-        // Parse key=value pairs where value can be a quoted string, number, True, False, or None
         const regex = /([a-zA-Z0-9_]+)\s*=\s*(?:"([^"]*)"|'([^']*)'|(True|False|None)|(-?\d+(?:\.\d+)?))/g
-        let m
-        while ((m = regex.exec(argsStr)) !== null) {
-            const key = m[1]
-            if (isDef(m[2])) {
-                args[key] = m[2]
-            } else if (isDef(m[3])) {
-                args[key] = m[3]
-            } else if (isDef(m[4])) {
-                args[key] = PYTHON_TO_JS[m[4]]
-            } else if (isDef(m[5])) {
-                args[key] = Number(m[5])
+        let parsedMatch
+        while ((parsedMatch = regex.exec(argsStr)) !== null) {
+            const key = parsedMatch[1]
+            if (isDef(parsedMatch[2])) {
+                args[key] = parsedMatch[2]
+            } else if (isDef(parsedMatch[3])) {
+                args[key] = parsedMatch[3]
+            } else if (isDef(parsedMatch[4])) {
+                args[key] = pythonToJs[parsedMatch[4]]
+            } else if (isDef(parsedMatch[5])) {
+                args[key] = Number(parsedMatch[5])
             }
         }
     }
@@ -85,7 +90,7 @@ export function parsePythonToolCallObj(text: string): ToolCallObj[] {
     ]
 }
 
-export function indexOfToolCallStartToken(rawAssistantResponse: string): number {
+function indexOfToolCallStartToken(rawAssistantResponse: string): number {
     if (!isStr(rawAssistantResponse)) {
         throw new TypeError(
             `Expected assistant response to be a string, but got ${rawAssistantResponse} (${typeof rawAssistantResponse})`,
@@ -95,24 +100,19 @@ export function indexOfToolCallStartToken(rawAssistantResponse: string): number 
 }
 
 /**
- * Parses an LFM2 assistant response containing Pythonic tool call tokens into a ToolCallsMessage.
- * Expects the text to contain `<|tool_call_start|>[fn(args)]<|tool_call_end|>` markers.
- * Returns null if the text does not contain a tool call start token.
+ * Parses an LFM2 assistant response containing Pythonic tool call tokens.
  *
  * @param rawAssistantResponse The raw assistant response text.
- * @returns A ToolCallsMessage if a valid tool call is detected
- * @throws {SyntaxError} If the start token is found but the end token is missing, or if brackets are missing.
+ * @returns A ToolCallsMessage if a valid tool call is detected.
  *
  * @example
  * ```ts
- * tryParseAsToolCallsMessage('<|tool_call_start|>[get_time()]<|tool_call_end|>') // => ToolCallsMessage
- * tryParseAsToolCallsMessage('Hello world') // => null
+ * tryParseAsToolCallsMessage('<|tool_call_start|>[get_time()]<|tool_call_end|>')
  * ```
  */
-export function tryParseAsToolCallsMessage(rawAssistantResponse: string): ToolCallsMessage {
+function tryParseAsToolCallsMessage(rawAssistantResponse: string): ToolCallsMessage {
     const startIdx = indexOfToolCallStartToken(rawAssistantResponse)
     if (startIdx === -1) {
-        // If no start token is found, we assume there are no tool calls and it's a regular AssistantMessage.
         throw new SyntaxError(
             `Expected a tool call start token in the assistant response, but got: ${rawAssistantResponse}`,
         )
@@ -127,16 +127,11 @@ export function tryParseAsToolCallsMessage(rawAssistantResponse: string): ToolCa
     }
 
     const inner = rawAssistantResponse.substring(afterStartIdx, endIdx).trim()
-
     if (!inner.startsWith('[') || !inner.endsWith(']')) {
-        throw new SyntaxError(
-            `Expected tool call to be wrapped in brackets, but got: ${inner} in ${rawAssistantResponse}`,
-        )
+        throw new SyntaxError(`Expected tool call to be wrapped in brackets, but got: ${inner} in ${rawAssistantResponse}`)
     }
 
-    const toolCallObjs = parsePythonToolCallObj(inner)
-
-    return { role: 'assistant', tool_calls: toolCallObjs }
+    return { role: 'assistant', tool_calls: parsePythonToolCallObj(inner) }
 }
 
 function toolCallObjArgumentValueToPython(value: unknown): string {
@@ -177,35 +172,7 @@ function toolCallsMessageToPython(toolCallsMessage: ToolCallsMessage): Assistant
     return createAssistantMessage(`${TOOL_CALL_START_TOKEN}[${content}]${TOOL_CALL_END_TOKEN}`)
 }
 
-/**
- * Converts one internal SupportedMessage into the plain Message format expected by Liquid models.
- *
- * Why this function exists:
- * The Liquid chat template renders assistant turns from `message.content` only.
- * It can inject tool list tokens (`<|tool_list_start|>...<|tool_list_end|>`) and wrap
- * tool role responses (`<|tool_response_start|>...<|tool_response_end|>`), but it does not
- * convert OpenAI-style `assistant.tool_calls` objects into
- * `<|tool_call_start|>[fn(args)]<|tool_call_end|>`.
- *
- * This adapter is therefore required to preserve stable tool-calling behavior across turns.
- * For assistant tool calls, it serializes `tool_calls` into the canonical Liquid text pattern
- * so the model sees the same format in history that it is expected to produce.
- *
- * When to use:
- * - Before `tokenizer.apply_chat_template(...)` whenever messages may include assistant tool calls.
- * - Keep this conversion even if a chat template is present, unless that template explicitly
- *   consumes `message.tool_calls` and emits tool-call tokens itself.
- *
- * @param message A supported message.
- * @returns A plain Message instance compatible with the Liquid chat template.
- *
- * @example
- * ```ts
- * convertSupportedMessageToLiquidMessage({ role: 'assistant', tool_calls: [toolCall] })
- * // => { role: 'assistant', content: '<|tool_call_start|>[fn()]<|tool_call_end|>' }
- * ```
- */
-export function convertSupportedMessageToLiquidMessage(message: SupportedMessage): Message {
+function convertSupportedMessageToLiquidMessage(message: SupportedMessage): Message {
     if (!isSupportedMessage(message)) {
         throw new TypeError(`Expected a supported message object. Got ${JSON.stringify(message)}`)
     }
@@ -222,23 +189,55 @@ export function convertSupportedMessageToLiquidMessage(message: SupportedMessage
 
 /**
  * Converts supported messages into the plain Message format expected by Liquid models.
- * Assistant tool calls are rewritten into the Python-style function call syntax used by LFM2.
  *
  * @param messages An array of supported messages.
  * @returns The formatted messages suitable for the Liquid chat template.
  *
  * @example
  * ```ts
- * convertSupportedMessagesToLiquidMessages([
- *   { role: 'user', content: 'Hi' },
- *   { role: 'assistant', tool_calls: [toolCall] },
- * ])
+ * convertSupportedMessagesToLiquidMessages([{ role: 'user', content: 'Hi' }])
  * ```
  */
-export function convertSupportedMessagesToLiquidMessages(messages: SupportedMessage[]): Message[] {
+function convertSupportedMessagesToLiquidMessages(messages: SupportedMessage[]): Message[] {
     if (!isArr(messages)) {
         throw new TypeError(`Expected an array of message objects. Got ${JSON.stringify(messages)}`)
     }
 
     return messages.map(convertSupportedMessageToLiquidMessage)
+}
+
+/**
+ * Adapter for Liquid tool-calling semantics.
+ *
+ * @example
+ * ```ts
+ * const chat = new MicroChat(factory, new LiquidAdapter())
+ * ```
+ */
+export class LiquidAdapter implements ChatModelAdapter {
+    name = 'liquid'
+
+    onBeforeChatTemplate(params: BeforeChatTemplateParams): BeforeChatTemplateResult {
+        return {
+            messages: convertSupportedMessagesToLiquidMessages(params.messages),
+            templateOptions: {
+                tools: params.tools,
+            },
+        }
+    }
+
+    onAfterDecode(params: AfterDecodeParams) {
+        try {
+            return tryParseAsToolCallsMessage(params.rawAssistantContent)
+        } catch {
+            return createAssistantMessage(params.cleanAssistantContent)
+        }
+    }
+}
+
+export const _test = {
+    stripToolCallTokens,
+    parsePythonToolCallObj,
+    tryParseAsToolCallsMessage,
+    convertSupportedMessagesToLiquidMessages,
 }
