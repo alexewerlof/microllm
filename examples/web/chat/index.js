@@ -1,58 +1,93 @@
-import * as jj from 'jj'
+import { JJD, JJHE } from 'jj'
 import { PipelineFactory, MicroChat, createUserMessage } from 'micro-llm'
 
-const status = jj.doc.find('#status')
+const jjDoc = JJD.from(document)
+const status = jjDoc.find('#status')
+const jjDevice = jjDoc.find('#device')
+const jjModel = jjDoc.find('#model')
+const jjLoadingProgress = jjDoc.find('#loading-progress')
+const jjInitializeButton = jjDoc.find('#initialize-model')
+const jjChatUI = jjDoc.find('#chatUI')
+let pipelineFactory
 
-const progressBars = new Map()
-
-function getProgressIndicator(file) {
-    if (!progressBars.has(file)) {
-        const progressBar = jj.JJHE.create('progress')
-            .setAttr({
-                min: 0,
-                max: 100,
-            })
-            .setValue(0)
-        const container = jj.JJHE.create('div').addChild(jj.JJHE.create('h3').setText(file), progressBar)
-        status.addChild(container)
-        progressBars.set(file, progressBar)
+async function hasUsableWebGpuAdapter() {
+    if (!('gpu' in navigator) || typeof navigator.gpu?.requestAdapter !== 'function') {
+        return false
     }
-    return progressBars.get(file)
+
+    return Boolean(await navigator.gpu.requestAdapter())
 }
 
-const pipelineFactory = new PipelineFactory('text-generation', 'onnx-community/LFM2-1.2B-Tool-ONNX', {
-    dtype: 'q4',
-    progress_callback: (progressInfo) => {
-        if (progressInfo.status !== 'progress') {
-            return
-        }
-        const bar = getProgressIndicator(progressInfo.file)
-        bar.setValue(progressInfo.progress)
-        console.log(progressInfo.file, progressInfo.progress)
-    },
-})
+async function initializeDeviceOptions() {
+    const isWebGpuUsable = await hasUsableWebGpuAdapter()
+    if (isWebGpuUsable) {
+        return
+    }
 
-jj.doc.find('#initializeModel').on('click', async () => {
+    const webGpuOption = document.querySelector('#device option[value="webgpu"]')
+    webGpuOption?.remove()
+
+    if (jjDevice.getValue() === 'webgpu') {
+        jjDevice.setValue('auto')
+    }
+}
+
+function describeRuntimeError(error) {
+    if (error instanceof Error) {
+        if (error.message.includes('10290488')) {
+            return 'Model initialization failed in this browser runtime. On Linux Chrome, enable the WebGPU flags from the README or try the WASM fallback on a machine with enough memory.'
+        }
+
+        return error.message
+    }
+
+    return String(error)
+}
+
+async function initialize() {
+    await initializeDeviceOptions()
+    const device = jjDevice.getValue()
+
+    pipelineFactory = new PipelineFactory('text-generation', jjModel.getValue(), {
+        dtype: 'q4',
+        device,
+        progress_callback: (progressInfo) => {
+            switch (progressInfo.status) {
+                case 'progress_total':
+                    jjLoadingProgress.setValue(progressInfo.progress)
+                    break
+                case 'ready':
+                    jjLoadingProgress.setValue(100)
+                    break
+            }
+        },
+    })
+    return await pipelineFactory.getPipeline()
+}
+
+jjInitializeButton.on('click', async () => {
     try {
-        await pipelineFactory.getPipeline()
-        console.log('Pipeline initialized')
+        await initialize()
         status.hide()
-        jj.doc.find('#chatUI').show()
+        jjChatUI.show()
     } catch (error) {
         console.error('Error initializing pipeline:', error)
+        alert('Error initializing pipeline: ' + describeRuntimeError(error))
     }
 })
 
-const prompt = jj.doc.find('#prompt').on('keydown', (event) => {
+const jjPrompt = jjDoc.find('#prompt').on('keydown', (event) => {
     if (event.key === 'Enter' && !event.shiftKey) {
         event.preventDefault()
-        sendPrompt()
+        void sendPrompt()
     }
 })
 
-jj.doc.find('#sendPrompt').on('click', sendPrompt)
+jjDoc.find('#sendPrompt').on('click', () => {
+    void sendPrompt()
+})
 
-const chatThread = jj.doc.find('#chatThread')
+const chatThread = jjDoc.find('#chatThread')
 
 async function chatCompletion(userInput, onToken) {
     if (typeof onToken !== 'function') {
@@ -75,26 +110,36 @@ async function chatCompletion(userInput, onToken) {
     messages.push(assistantContent)
 }
 
-function sendPrompt() {
-    const userPrompt = prompt.getValue()
+async function sendPrompt() {
+    if (!pipelineFactory) {
+        alert('Please initialize the model first')
+        return
+    }
+
+    const userPrompt = jjPrompt.getValue()
     if (userPrompt.trim() === '') {
         alert('Please enter a prompt')
         return
     }
-    prompt.setValue('')
-    const assistantMessage = jj.JJHE.create('div')
-    const latestChatResponse = jj.JJHE.create('div').addChild(
-        jj.JJHE.create('h2').setText('User'),
-        jj.JJHE.create('div').setText(userPrompt),
-        jj.JJHE.create('h2').setText('Assistant'),
+    jjPrompt.setValue('')
+    const assistantMessage = JJHE.create('div')
+    const latestChatResponse = JJHE.create('div').addChild(
+        JJHE.create('h2').setText('User'),
+        JJHE.create('div').setText(userPrompt),
+        JJHE.create('h2').setText('Assistant'),
         assistantMessage,
     )
 
     chatThread.addChild(latestChatResponse)
 
-    chatCompletion(userPrompt, (token) => {
-        const tokenElement = jj.JJHE.create('span').setText(token)
-        assistantMessage.addChild(tokenElement)
-        console.log(token)
-    })
+    try {
+        await chatCompletion(userPrompt, (token) => {
+            const tokenElement = JJHE.create('span').setText(token)
+            assistantMessage.addChild(tokenElement)
+            console.log(token)
+        })
+    } catch (error) {
+        console.error('Error during chat completion:', error)
+        assistantMessage.setText(describeRuntimeError(error))
+    }
 }

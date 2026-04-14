@@ -1,11 +1,9 @@
-import { createUserMessage, SupportedMessage, MicroChat, PipelineFactory, LiquidAdapter } from '../src/index.js'
-import { createProgressCallback } from './progress-callback.js'
+import { input } from '@inquirer/prompts'
+import { createUserMessage, SupportedMessage, MicroChat, LiquidAdapter } from '../src/index.js'
+import { inquirePipeline } from './pipeline-selection.js'
 
 async function main() {
-    const pipelineFactory = new PipelineFactory('text-generation', 'onnx-community/LFM2-1.2B-ONNX', {
-        dtype: 'q4',
-        progress_callback: createProgressCallback('Chat Pipeline'),
-    })
+    const pipelineFactory = await inquirePipeline()
     const llm = new MicroChat(pipelineFactory, new LiquidAdapter())
 
     await pipelineFactory.getPipeline()
@@ -20,9 +18,9 @@ async function main() {
     let shouldContinue = true
 
     do {
-        console.log('Prompt:')
-        const userInput = await new Promise<string>((resolve) => {
-            process.stdin.once('data', (data) => resolve(data.toString().trim()))
+        console.log()
+        const userInput = await input({
+            message: 'Prompt:',
         })
         if (['exit', 'quit', ''].includes(userInput.toLowerCase())) {
             shouldContinue = false
@@ -38,7 +36,6 @@ async function main() {
         }
     } while (shouldContinue)
 
-    process.stdin.destroy()
     console.log('Goodbye!')
 }
 

@@ -4,7 +4,7 @@ import { bytesToHumanReadable } from '../src/utilities/format.js'
 
 export function createProgressCallback(task: string = ''): ProgressCallback {
     const progressBar = new SingleBar({
-        format: `${task} pipeline {loadedHuman} of {totalHuman} {bar} | {percentage}%`,
+        format: `${task} pipeline {loadedHuman} of {totalHuman} {bar} {percentage}%`,
         fps: 10,
         barCompleteChar: '\u2588',
         barIncompleteChar: '\u2591',
@@ -13,7 +13,6 @@ export function createProgressCallback(task: string = ''): ProgressCallback {
     let isInitialized = false
 
     return (p: ProgressInfo) => {
-        
         switch (p.status) {
             case 'progress_total':
                 {

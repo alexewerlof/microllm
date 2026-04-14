@@ -16,56 +16,19 @@ import { pipelineProgressConsoleReporter } from './utilities/download.js'
  * firing the "initiated" -> "download" -> "progress" (instantly 100%) -> "done" events.
  * Specify a custom location for models (defaults to '/models/').
  * env.localModelPath = "/huggingface";
- * 
+ *
  * Enable WASM Caching for offline-first scenarios
  * env.useWasmCache = true;
- * 
+ *
  * Add to suppress ONNX Runtime warnings and console noise.
  * env.logLevel = 'error'
  */
 
-/**
- * Shared ONNX runtime configuration.
- * Detects the execution environment and configures the appropriate backend:
- *   - Node.js → CPU device + filesystem cache
- *   - Browser → built-in WebGPU/WASM selection
- *
- * All downstream modules (model.js, Embedder.js) import from here
- * so environment setup runs exactly once.
- *
- * Returns the best available compute device for the current environment.
- * Node.js always uses CPU. Browsers prefer WebGPU with WASM fallback.
- * @returns {Promise<string>} "webgpu" or "wasm" for browsers, "cpu" for Node.js
- */
-async function getDevice(): Promise<'webgpu' | 'wasm' | 'cpu'> {
-    if (hasPath(globalThis, 'process', 'versions', 'node')) {
-        console.debug('Running in Node.js environment, using transformers.js ONNX runtime selection')
-        env.cacheDir = './.cache'
-        return 'cpu'
-    }
-
+if (hasPath(globalThis, 'process', 'versions', 'node')) {
+    // Running in node.js
+    env.cacheDir = './.cache'
+} else {
     console.debug('Running in browser environment, using built-in ONNX Runtime with WebGPU/WASM backends')
-    try {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const adapter = await (navigator as any)?.gpu?.requestAdapter()
-        return adapter ? 'webgpu' : 'wasm'
-    } catch {
-        return 'wasm'
-    }
-}
-
-export async function createPipeline<TTask extends PipelineType>(
-    task: TTask,
-    model: string,
-    options: PretrainedModelOptions = {},
-) {
-    const device = await getDevice()
-    console.debug(`Creating pipeline for task ${task} and model ${model} on device ${device}`)
-    return await pipeline(task, model, {
-        device,
-        progress_callback: pipelineProgressConsoleReporter,
-        ...options,
-    })
 }
 
 export class PipelineFactory<TTask extends PipelineType> {
@@ -104,7 +67,11 @@ export class PipelineFactory<TTask extends PipelineType> {
         const logLine = `Create pipeline for task ${this.#task} and model ${this.#modelId}`
         try {
             console.time(logLine)
-            const instance = await createPipeline<TTask>(this.#task, this.#modelId, this.#pipelineOptions)
+            console.debug(`Creating pipeline for task ${this.#task} and model ${this.#modelId}`)
+            const instance = await pipeline(this.#task, this.#modelId, {
+                progress_callback: pipelineProgressConsoleReporter,
+                ...this.#pipelineOptions,
+            })
             console.timeEnd(logLine)
             return instance
         } catch (error) {
