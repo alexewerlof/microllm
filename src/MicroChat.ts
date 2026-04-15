@@ -76,38 +76,6 @@ function decodeAssistantText(
     return extractAssistantText(decodedOutputs, decodedPrompts)
 }
 
-/**
- * Decodes the prompt input IDs into the exact plain-text sequence sent to generation.
- * It is primarily used for debugging to see what we're sending to the model.
- *
- * @param tokenizer The tokenizer instance with batch_decode support.
- * @param promptInputIds The prompt token IDs from apply_chat_template().
- * @param skipSpecialTokens Whether to strip special tokens during decoding.
- * @returns The decoded prompt text.
- *
- * @example
- * ```ts
- * _printDecodePromptText(tokenizer, inputIds, false)
- * ```
- */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-function _printDecodePromptText(
-    tokenizer: { batch_decode: (batch: Tensor, decode_args?: Record<string, unknown>) => string[] },
-    promptInputIds: Tensor,
-    skipSpecialTokens: boolean,
-): void {
-    const decodeArgs = skipSpecialTokens ? { skip_special_tokens: true } : {}
-    const decodedPrompts = tokenizer.batch_decode(promptInputIds, decodeArgs)
-
-    if (!isArr(decodedPrompts) || !isStr(decodedPrompts[0])) {
-        throw new TypeError('Expected decoded prompt text array from tokenizer.batch_decode().')
-    }
-
-    const promptTextWithSpecialTokens = decodedPrompts[0]
-
-    console.debug(promptTextWithSpecialTokens)
-}
-
 export class MicroChat {
     pipelineFactory: PipelineFactory<'text-generation'>
     adapter: ChatModelAdapter
@@ -128,7 +96,9 @@ export class MicroChat {
         this.pipelineFactory = pipelineFactory
 
         if (!isChatModelAdapter(adapter)) {
-            throw new TypeError(`Expected adapter to expose onBeforeChatTemplate() and onAfterDecode(), but got ${adapter} (${typeof adapter})`)
+            throw new TypeError(
+                `Expected adapter to expose onBeforeChatTemplate() and onAfterDecode(), but got ${adapter} (${typeof adapter})`,
+            )
         }
 
         this.adapter = adapter
