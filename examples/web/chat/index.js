@@ -1,5 +1,5 @@
 import { JJD, JJHE } from 'jj'
-import { PipelineFactory, MicroChat, createUserMessage } from 'micro-llm'
+import { PipelineFactory, MicroChat, createUserMessage, createSystemMessage } from 'micro-llm'
 
 const h = JJHE.tree
 
@@ -9,14 +9,17 @@ const jjLoadProg = jjDoc.find('#loading-progress', true)
 const jjDevice = jjDoc.find('#device', true)
 const jjChatUI = jjDoc.find('#chatUI', true)
 const jjModel = jjDoc.find('#model', true)
+const jjSystemPrompt = jjDoc.find('#system-prompt', true)
 const jjPrompt = jjDoc.find('#prompt', true).on('keydown', handlePromptKeydown)
 const jjChatThread = jjDoc.find('#chat-thread', true)
 
 let pipelineFactory
 
+const messages = []
+
 jjDoc.find('#initialize-model', true).on('click', async () => {
     try {
-        pipelineFactory = new PipelineFactory('text-generation', jjModel.ref.value, {
+        pipelineFactory = new PipelineFactory('text-generation', jjModel.getValue(), {
             dtype: 'q4',
             device: jjDevice.getValue(),
             progress_callback: (progressInfo) => {
@@ -34,6 +37,7 @@ jjDoc.find('#initialize-model', true).on('click', async () => {
 
         jjInitControls.swAttr('disabled', true)
         jjChatUI.swAttr('hidden', false)
+        messages.push(createSystemMessage(jjSystemPrompt.getValue()))
     } catch (error) {
         console.error('Error initializing pipeline:', error)
         alert(`Error initializing pipeline: ${error}`)
@@ -56,19 +60,16 @@ async function chatCompletion(userInput, onToken) {
     }
     const llm = new MicroChat(pipelineFactory)
 
-    const messages = [
-        {
-            role: 'system',
-            content: 'You are a helpful assistant.',
-        },
-    ]
-
     console.log('Prompt:')
     messages.push(createUserMessage(userInput))
     console.log('Response:')
-    const assistantContent = await llm.complete({ messages, onToken })
-    console.log(assistantContent.content)
-    messages.push(assistantContent)
+    const maxNewTokens = parseInt(jjDoc.find('#max-new-tokens', true).getValue(), 10) || 512
+    console.debug({ maxNewTokens })
+    const assistantMessage = await llm.complete({ messages, onToken, config: {
+        max_new_tokens: maxNewTokens,
+    }})
+    console.log(assistantMessage)
+    messages.push(assistantMessage)
 }
 
 async function sendPrompt() {
@@ -77,13 +78,13 @@ async function sendPrompt() {
         return
     }
 
-    const userPrompt = jjPrompt.ref.value
+    const userPrompt = jjPrompt.getValue()
     if (userPrompt.trim() === '') {
         alert('Please enter a prompt')
         return
     }
 
-    jjPrompt.ref.value = ''
+    jjPrompt.setValue('')
 
     const jjAssistantMessage = h('div')
     const jjChatResponse = h('div', null,

@@ -10,7 +10,7 @@
         <fieldset id="init-controls">
             <legend>Settings</legend>
             <div>
-                <label for="model">Model:</label>
+                <label for="model">Model:</label><br />
                 <select id="model">
                     <option value="onnx-community/LFM2-1.2B-ONNX">Liquid 2 1.2B</option>
                     <option value="LiquidAI/LFM2.5-1.2B-Thinking-ONNX">Liquid 2.5 1.2B Thinking</option>
@@ -21,12 +21,16 @@
                 </select>
             </div>
             <div>
-                <label for="device">Device:</label>
+                <label for="device">Device:</label><br />
                 <select id="device">
                     <option value="auto">Auto</option>
                     <option value="webgpu">WebGPU (GPU via WebGPU API)</option>
                     <option value="wasm">WASM (CPU fallback for browsers)</option>
                 </select>
+            </div>
+            <div>
+                <label for="system-prompt">System Prompt:</label><br />
+                <textarea id="system-prompt" rows="4" cols="50" placeholder="You are a helpful assistant.">You are a helpful assistant.</textarea>
             </div>
             <progress id="loading-progress" value="0" max="100"></progress>
             <button id="initialize-model">
@@ -34,6 +38,20 @@
             </button>
         </fieldset>
         <div id="chatUI" hidden>
+            <fieldset>
+                <legend>Chat Options</legend>
+                <label for="max-new-tokens">Max New Tokens:</label><br />
+                <select id="max-new-tokens">
+                    <option value="512">512</option>
+                    <option value="1024">1k</option>
+                    <option value="2048">2k</option>
+                    <option value="4096" selected>4k</option>
+                    <option value="8192">8k</option>
+                    <option value="16384">16k</option>
+                    <option value="32768">32k</option>
+                    <option value="65536">64k</option>
+                </select>
+            </fieldset>
             <div id="chat-thread"></div>
             <textarea id="prompt" rows="4" cols="50" placeholder="Type something and press enter..."></textarea><br />
             <button id="sendPrompt">Send</button>
