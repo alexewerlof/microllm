@@ -7,36 +7,34 @@
         <title>MicroLLM - Chat</title>
     </head>
     <body>
-        <div id="status">
-            <fieldset>
-                <legend>Model Options</legend>
-                <div>
-                    <label for="device">Device:</label>
-                    <select id="device">
-                        <option value="auto">Auto</option>
-                        <option value="webgpu">WebGPU (GPU via WebGPU API)</option>
-                        <option value="wasm">WASM (CPU fallback for browsers)</option>
-                    </select>
-                </div>
-                <div>
-                    <label for="model">Model:</label>
-                    <select id="model">
-                        <option value="onnx-community/LFM2-1.2B-ONNX">Liquid 2 1.2B</option>
-                        <option value="LiquidAI/LFM2.5-1.2B-Thinking-ONNX">Liquid 2.5 1.2B Thinking</option>
-                        <option value="onnx-community/LFM2-1.2B-RAG-ONNX">Liquid 2 1.2B RAG</option>
-                        <option value="onnx-community/LFM2-1.2B-Tool-ONNX">Liquid 2 1.2B Tool Calling</option>
-                        <option value="onnx-community/gemma-4-E4B-it-ONNX">Gemma 4 E4B Instruction Tuned</option>
-                        <option value="onnx-community/gemma-3-1b-it-ONNX" disabled>Gemma 3 1B Instruction Tuned</option>
-                    </select>
-                </div>
-            </fieldset>
+        <fieldset id="init-controls">
+            <legend>Settings</legend>
+            <div>
+                <label for="model">Model:</label>
+                <select id="model">
+                    <option value="onnx-community/LFM2-1.2B-ONNX">Liquid 2 1.2B</option>
+                    <option value="LiquidAI/LFM2.5-1.2B-Thinking-ONNX">Liquid 2.5 1.2B Thinking</option>
+                    <option value="onnx-community/LFM2-1.2B-RAG-ONNX">Liquid 2 1.2B RAG</option>
+                    <option value="onnx-community/LFM2-1.2B-Tool-ONNX">Liquid 2 1.2B Tool Calling</option>
+                    <option value="onnx-community/gemma-4-E4B-it-ONNX">Gemma 4 E4B Instruction Tuned</option>
+                    <option value="onnx-community/gemma-3-1b-it-ONNX" disabled>Gemma 3 1B Instruction Tuned</option>
+                </select>
+            </div>
+            <div>
+                <label for="device">Device:</label>
+                <select id="device">
+                    <option value="auto">Auto</option>
+                    <option value="webgpu">WebGPU (GPU via WebGPU API)</option>
+                    <option value="wasm">WASM (CPU fallback for browsers)</option>
+                </select>
+            </div>
             <progress id="loading-progress" value="0" max="100"></progress>
             <button id="initialize-model">
                 Initialize
             </button>
-        </div>
+        </fieldset>
         <div id="chatUI" hidden>
-            <div id="chatThread"></div>
+            <div id="chat-thread"></div>
             <textarea id="prompt" rows="4" cols="50" placeholder="Type something and press enter..."></textarea><br />
             <button id="sendPrompt">Send</button>
         </div>

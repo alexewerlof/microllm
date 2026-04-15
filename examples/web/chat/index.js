@@ -1,97 +1,58 @@
 import { JJD, JJHE } from 'jj'
 import { PipelineFactory, MicroChat, createUserMessage } from 'micro-llm'
 
+const h = JJHE.tree
+
 const jjDoc = JJD.from(document)
-const status = jjDoc.find('#status')
-const jjDevice = jjDoc.find('#device')
-const jjModel = jjDoc.find('#model')
-const jjLoadingProgress = jjDoc.find('#loading-progress')
-const jjInitializeButton = jjDoc.find('#initialize-model')
-const jjChatUI = jjDoc.find('#chatUI')
+const jjInitControls = jjDoc.find('#init-controls', true)
+const jjLoadProg = jjDoc.find('#loading-progress', true)
+const jjDevice = jjDoc.find('#device', true)
+const jjChatUI = jjDoc.find('#chatUI', true)
+const jjModel = jjDoc.find('#model', true)
+const jjPrompt = jjDoc.find('#prompt', true).on('keydown', handlePromptKeydown)
+const jjChatThread = jjDoc.find('#chat-thread', true)
+
 let pipelineFactory
 
-async function hasUsableWebGpuAdapter() {
-    if (!('gpu' in navigator) || typeof navigator.gpu?.requestAdapter !== 'function') {
-        return false
-    }
-
-    return Boolean(await navigator.gpu.requestAdapter())
-}
-
-async function initializeDeviceOptions() {
-    const isWebGpuUsable = await hasUsableWebGpuAdapter()
-    if (isWebGpuUsable) {
-        return
-    }
-
-    const webGpuOption = document.querySelector('#device option[value="webgpu"]')
-    webGpuOption?.remove()
-
-    if (jjDevice.getValue() === 'webgpu') {
-        jjDevice.setValue('auto')
-    }
-}
-
-function describeRuntimeError(error) {
-    if (error instanceof Error) {
-        if (error.message.includes('10290488')) {
-            return 'Model initialization failed in this browser runtime. On Linux Chrome, enable the WebGPU flags from the README or try the WASM fallback on a machine with enough memory.'
-        }
-
-        return error.message
-    }
-
-    return String(error)
-}
-
-async function initialize() {
-    await initializeDeviceOptions()
-    const device = jjDevice.getValue()
-
-    pipelineFactory = new PipelineFactory('text-generation', jjModel.getValue(), {
-        dtype: 'q4',
-        device,
-        progress_callback: (progressInfo) => {
-            switch (progressInfo.status) {
-                case 'progress_total':
-                    jjLoadingProgress.setValue(progressInfo.progress)
-                    break
-                case 'ready':
-                    jjLoadingProgress.setValue(100)
-                    break
-            }
-        },
-    })
-    return await pipelineFactory.getPipeline()
-}
-
-jjInitializeButton.on('click', async () => {
+jjDoc.find('#initialize-model', true).on('click', async () => {
     try {
-        await initialize()
-        status.hide()
-        jjChatUI.show()
+        pipelineFactory = new PipelineFactory('text-generation', jjModel.ref.value, {
+            dtype: 'q4',
+            device: jjDevice.getValue(),
+            progress_callback: (progressInfo) => {
+                switch (progressInfo.status) {
+                    case 'progress_total':
+                        jjLoadProg.setValue(progressInfo.progress)
+                        break
+                    case 'ready':
+                        jjLoadProg.setValue(100)
+                        break
+                }
+            },
+        })
+        await pipelineFactory.getPipeline()
+
+        jjInitControls.swAttr('disabled', true)
+        jjChatUI.swAttr('hidden', false)
     } catch (error) {
         console.error('Error initializing pipeline:', error)
-        alert('Error initializing pipeline: ' + describeRuntimeError(error))
+        alert(`Error initializing pipeline: ${error}`)
     }
 })
 
-const jjPrompt = jjDoc.find('#prompt').on('keydown', (event) => {
-    if (event.key === 'Enter' && !event.shiftKey) {
+function handlePromptKeydown(event) {
+    if (event.key === 'Enter' && !event.shiftKey && !event.ctrlKey) {
         event.preventDefault()
         void sendPrompt()
     }
-})
-
-jjDoc.find('#sendPrompt').on('click', () => {
-    void sendPrompt()
-})
-
-const chatThread = jjDoc.find('#chatThread')
+}
 
 async function chatCompletion(userInput, onToken) {
     if (typeof onToken !== 'function') {
         throw new Error('onToken must be a function')
+    }
+    if (!pipelineFactory) {
+        throw new ReferenceError('Pipeline factory is not initialized')
     }
     const llm = new MicroChat(pipelineFactory)
 
@@ -116,30 +77,61 @@ async function sendPrompt() {
         return
     }
 
-    const userPrompt = jjPrompt.getValue()
+    const userPrompt = jjPrompt.ref.value
     if (userPrompt.trim() === '') {
         alert('Please enter a prompt')
         return
     }
-    jjPrompt.setValue('')
-    const assistantMessage = JJHE.create('div')
-    const latestChatResponse = JJHE.create('div').addChild(
-        JJHE.create('h2').setText('User'),
-        JJHE.create('div').setText(userPrompt),
-        JJHE.create('h2').setText('Assistant'),
-        assistantMessage,
+
+    jjPrompt.ref.value = ''
+
+    const jjAssistantMessage = h('div')
+    const jjChatResponse = h('div', null,
+        h('h2', null, 'User'),
+        h('div', null, userPrompt),
+        h('h2', null, 'Assistant'),
+        jjAssistantMessage,
     )
 
-    chatThread.addChild(latestChatResponse)
+    jjChatThread.addChild(jjChatResponse)
 
     try {
         await chatCompletion(userPrompt, (token) => {
-            const tokenElement = JJHE.create('span').setText(token)
-            assistantMessage.addChild(tokenElement)
+            const span = h('span')
+            span.ref.innerText = token
+            jjAssistantMessage.addChild(span)
             console.log(token)
         })
     } catch (error) {
         console.error('Error during chat completion:', error)
-        assistantMessage.setText(describeRuntimeError(error))
     }
 }
+
+jjDoc.find('#sendPrompt', true).on('click', () => void sendPrompt())
+
+async function hasUsableWebGpuAdapter() {
+    if (typeof navigator?.gpu?.requestAdapter !== 'function') {
+        return false
+    }
+
+    return Boolean(await navigator.gpu.requestAdapter())
+}
+
+async function initializeDeviceOptions() {
+    const isWebGpuUsable = await hasUsableWebGpuAdapter()
+    if (isWebGpuUsable) {
+        // Select it by default
+        jjDevice.setValue('webgpu')
+    } else {
+        jjDevice.setValue('auto').find('option[value="webgpu"]')?.rm()
+    }
+}
+
+async function main() {
+    await initializeDeviceOptions()
+}
+
+main().catch((error) => {
+    console.error('Error in main:', error)
+    alert(`Error: ${error}`)
+})
