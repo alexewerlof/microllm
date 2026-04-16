@@ -1,0 +1,12 @@
+{
+    "compilerOptions": {
+        "checkJs": false,
+        "module": "ESNext",
+        "moduleResolution": "bundler",
+        "lib": ["ESNext", "DOM"],
+        "paths": {
+            "micro-llm": ["../../lib/bundle.browser.d.ts"],
+            "jj": ["../../node_modules/jj/lib/bundle.d.ts"]
+        }
+    }
+}
