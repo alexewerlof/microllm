@@ -1,7 +1,8 @@
 import { hasProp, inArr, isArr, isArrLen, isPOJO, isStr } from 'jty'
 import {
     AssistantMessage,
-    MessageRole,
+    MessageContent,
+    RoledMessage,
     SupportedMessage,
     SupportedMessageArr,
     SystemMessage,
@@ -21,7 +22,7 @@ export const SUPPORTED_ROLES = ['system', 'user', 'assistant', 'tool'] as const
  * @param x The object to evaluate.
  * @returns True if the object matches the criteria, false otherwise.
  */
-export function isMessageRole(x: unknown): x is MessageRole {
+export function isRoledMessage(x: unknown): x is RoledMessage {
     if (!hasProp(x, 'role') || !isStr(x.role)) {
         return false
     }
@@ -36,10 +37,10 @@ export function isMessageRole(x: unknown): x is MessageRole {
  * @returns True if it is a structurally sound Message, false otherwise.
  */
 export function isMessage(x: unknown): x is Message {
-    if (!isMessageRole(x)) {
+    if (!isRoledMessage(x)) {
         return false
     }
-    return hasProp(x, 'content') && (isStr(x.content) || isArr(x.content))
+    return hasProp(x, 'content') && isMessageContent(x.content)
 }
 
 /**
@@ -79,7 +80,7 @@ export function isAssistantMessage(x: unknown): x is AssistantMessage {
  * @returns True if the object matches the schema, false otherwise.
  */
 export function isToolCallsMessage(x: unknown): x is ToolCallsMessage {
-    if (!isMessageRole(x) || x.role !== 'assistant') {
+    if (!isRoledMessage(x) || x.role !== 'assistant') {
         return false
     }
     return isArrLen((x as ToolCallsMessage).tool_calls, 1) && (x as ToolCallsMessage).tool_calls.every(isToolCallObj)
@@ -130,4 +131,8 @@ export function isSupportedMessage(x: unknown): x is SupportedMessage {
 
 export function isSupportedMessageArr(x: unknown): x is SupportedMessageArr {
     return isArr(x) && x.every(isSupportedMessage)
+}
+
+export function isMessageContent(x: unknown): x is MessageContent {
+    return isStr(x) || (isArr(x) && x.every(isStr))
 }

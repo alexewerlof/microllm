@@ -5,11 +5,12 @@ import { PipelineFactory } from './PipelineFactory.js'
 import { isArr, isDef, isObj, isPOJO, isStr } from 'jty'
 import { normalizeMessageArray } from './utilities/normalization.js'
 import { SignalStoppingCriteria } from './utilities/SignalStoppingCriteria.js'
-import { FunctionToolDeclaration, isFunctionToolDeclaration } from './Tools/index.js'
+import { isFunctionToolDeclaration } from './Tools/index.js'
 import { SupportedMessage } from './Message/types.js'
 import { isChatModelAdapter } from './adapters/guards.js'
 import { ChatModelAdapter } from './adapters/types.js'
 import { LiquidAdapter } from './adapters/LiquidAdapter.js'
+import { MicroLLM, MicroLLMCompleteParams } from './MicroLLM.js'
 
 const defaultTextGenerationConfig: Partial<TextGenerationOptions> = {
     max_new_tokens: 512,
@@ -17,18 +18,7 @@ const defaultTextGenerationConfig: Partial<TextGenerationOptions> = {
     top_p: 0.5,
 }
 
-export interface MicroChatCompleteParams {
-    /** The conversation messages. */
-    messages: SupportedMessage[]
-    /** Optional text generation config like temperature, top_p, etc. */
-    config?: Partial<TextGenerationOptions>
-    /** Optional abort signal. */
-    signal?: AbortSignal
-    /** Optional tool declarations whose schemas are injected into the prompt. */
-    tools?: FunctionToolDeclaration[]
-    /** Optional callback function which will receive every token as it's generated */
-    onToken?: (token: string) => unknown
-}
+export type MicroChatCompleteParams = MicroLLMCompleteParams<Partial<TextGenerationOptions>>
 
 /**
  * Extracts the assistant continuation text from a decoded full-sequence generation.
@@ -76,7 +66,7 @@ function decodeAssistantText(
     return extractAssistantText(decodedOutputs, decodedPrompts)
 }
 
-export class MicroChat {
+export class MicroChat implements MicroLLM<Partial<TextGenerationOptions>> {
     pipelineFactory: PipelineFactory<'text-generation'>
     adapter: ChatModelAdapter
 

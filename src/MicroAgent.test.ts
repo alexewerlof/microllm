@@ -6,6 +6,7 @@ import { Tools } from './Tools/index.js'
 import { SupportedMessage } from './Message/types.js'
 import { PipelineFactory } from './PipelineFactory.js'
 import { Message } from '@huggingface/transformers'
+import { MicroLLM } from './MicroLLM.js'
 
 const MOCK_PROMPT_IDS = [[1, 2, 3]]
 const MOCK_OUTPUT_IDS = [[1, 2, 3, 4, 5, 6]]
@@ -232,5 +233,23 @@ describe('MicroAgent', () => {
 
         assert.ok(capturedGenerateArgs)
         assert.ok('stopping_criteria' in capturedGenerateArgs)
+    })
+
+    test('accepts any object implementing the MicroLLM contract', async () => {
+        const llm: MicroLLM<unknown> = {
+            async complete() {
+                return { role: 'assistant', content: 'ok' }
+            },
+        }
+
+        const agent = new MicroAgent(llm)
+        const result = await agent.work({
+            messages: [{ role: 'user', content: 'Hello' }],
+            tools: new Tools(),
+        })
+
+        assert.strictEqual(result.length, 1)
+        assert.strictEqual(result[0].role, 'assistant')
+        assert.strictEqual(result[0].content, 'ok')
     })
 })

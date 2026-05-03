@@ -4,6 +4,7 @@ import { MicroEmbedder } from './MicroEmbedder.js'
 import { MicroRAG } from './MicroRAG.js'
 import { PipelineFactory } from './PipelineFactory.js'
 import { VectorStore } from './VectorStore.js'
+import { MicroLLM } from './MicroLLM.js'
 
 function createEmbedderWithEmbeddings(embeddingsByText: Record<string, number[]>): MicroEmbedder {
     const embedder = new MicroEmbedder(new PipelineFactory('feature-extraction', 'test-model'))
@@ -82,5 +83,43 @@ describe(MicroRAG.name, () => {
             name: 'TypeError',
             message: 'Expected VectorStore instance for vectorStore, but got [object Object] (object)',
         })
+    })
+
+    test('throws when complete is called without an llm delegate', async () => {
+        const embedder = createEmbedderWithEmbeddings({})
+        const rag = new MicroRAG(embedder)
+
+        await assert.rejects(
+            () => rag.complete({ messages: [{ role: 'user', content: 'Hello' }] }),
+            /MicroRAG requires an llm delegate to use complete\(\)/,
+        )
+    })
+
+    test('augments messages with similarity context and delegates completion to llm', async () => {
+        const chunk = '# Guide\nAlways greet politely.'
+        const embedder = createEmbedderWithEmbeddings({
+            [chunk]: [1, 0],
+            hello: [1, 0],
+        })
+
+        let capturedMessages: unknown[] = []
+        const llm: MicroLLM<unknown> = {
+            async complete(params) {
+                capturedMessages = params.messages
+                return { role: 'assistant', content: 'Hello there' }
+            },
+        }
+
+        const rag = new MicroRAG(embedder, new VectorStore(), llm)
+        await rag.addDocument(chunk)
+
+        const result = await rag.complete({
+            messages: [{ role: 'user', content: 'hello' }],
+        })
+
+        assert.strictEqual(result.role, 'assistant')
+        assert.strictEqual(result.content, 'Hello there')
+        assert.ok(capturedMessages.length >= 2)
+        assert.strictEqual((capturedMessages[0] as { role?: string }).role, 'system')
     })
 })

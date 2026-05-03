@@ -1,6 +1,7 @@
 import { Message } from '@huggingface/transformers'
 
-export type MessageRole = Pick<Message, 'role'>
+export type RoledMessage = Pick<Message, 'role'>
+export type MessageContent = Message['content']
 
 export interface SystemMessage extends Message {
     role: 'system'
@@ -17,7 +18,7 @@ export interface AssistantMessage extends Message {
 /**
  * Describes a message from an assistant that includes tool call requests.
  */
-export interface ToolCallsMessage extends MessageRole {
+export interface ToolCallsMessage extends RoledMessage {
     role: 'assistant'
     content?: string | null
     tool_calls: ToolCallObj[]

@@ -1,8 +1,8 @@
 import { isInstance, isArr, isObj } from 'jty'
 import { Tools } from './Tools/index.js'
-import { MicroChat } from './MicroChat.js'
 import { SupportedMessage } from './Message/types.js'
 import { isAssistantMessage, isToolCallsMessage } from './Message/guards.js'
+import { isMicroLLM, MicroLLM } from './MicroLLM.js'
 
 export interface MicroAgentWorkParams {
     /** The conversation messages. */
@@ -14,7 +14,7 @@ export interface MicroAgentWorkParams {
 }
 
 /**
- * Orchestrates the agentic loop between a MicroChat and a set of Tools.
+ * Orchestrates the agentic loop between a MicroLLM and a set of Tools.
  * Sends messages to the LLM, detects tool call requests, executes them,
  * and repeats until the LLM produces a final text answer.
  *
@@ -35,25 +35,25 @@ export class MicroAgent {
     /** Maximum number of consecutive tool calls before throwing. */
     static MAX_TOOL_CALLS = 10
 
-    #microChat: MicroChat
+    #microChat: MicroLLM<unknown>
 
     /**
-     * @param microChat The MicroChat instance used for generating responses.
-     * @throws {TypeError} If microChat is not an instance of MicroChat.
+     * @param microChat The MicroLLM instance used for generating responses.
+     * @throws {TypeError} If microChat does not expose the MicroLLM contract.
      */
-    constructor(microChat: MicroChat) {
-        if (!isInstance(microChat, MicroChat)) {
+    constructor(microChat: MicroLLM<unknown>) {
+        if (!isMicroLLM(microChat)) {
             throw new TypeError(
-                `Expected microChat to be an instance of MicroChat. Got ${microChat} (${typeof microChat})`,
+                `Expected microChat to expose complete(params), but got ${microChat} (${typeof microChat})`,
             )
         }
         this.#microChat = microChat
     }
 
     /**
-     * Gets the MicroChat instance.
+     * Gets the MicroLLM instance.
      */
-    get microChat(): MicroChat {
+    get microChat(): MicroLLM<unknown> {
         return this.#microChat
     }
 

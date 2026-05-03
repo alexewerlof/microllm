@@ -1,27 +1,31 @@
-import { isStr, isInstance, isDef, isPOJO } from 'jty'
+import { isArr, isDef, isInstance, isObj, isPOJO, isStr } from 'jty'
 import { VectorStore, VectorStoreQueryResult } from './VectorStore.js'
 import { MicroEmbedder } from './MicroEmbedder.js'
 import { headerChunk } from './utilities/chunking.js'
 import { createSystemMessage } from './Message/factories.js'
+import { MicroLLM, MicroLLMCompleteParams, isMicroLLM } from './MicroLLM.js'
+import { SupportedMessage } from './Message/types.js'
 
 /**
  * Portable RAG (Retrieval-Augmented Generation) engine.
  * Works in both Node.js and browser environments.
  * Handles chunking, embedding, and context retrieval.
  */
-export class MicroRAG {
+export class MicroRAG<TConfig = unknown> implements MicroLLM<TConfig> {
     #embedder: MicroEmbedder
     #vectorStore: VectorStore
+    #llm?: MicroLLM<TConfig>
 
     /**
      * Initializes a new RAG instance.
      *
      * @param embedder - Initialized embedder instance used to convert text to vectors.
      * @param vectorStore - Optional store instance used for indexing and retrieval.
+     * @param llm - Optional language model used by complete() for RAG-augmented generation.
      * @throws {TypeError} If embedder is not an instance of MicroEmbedder.
      * @throws {TypeError} If vectorStore is not an instance of VectorStore.
      */
-    constructor(embedder: MicroEmbedder, vectorStore: VectorStore = new VectorStore()) {
+    constructor(embedder: MicroEmbedder, vectorStore: VectorStore = new VectorStore(), llm?: MicroLLM<TConfig>) {
         if (!isInstance(embedder, MicroEmbedder)) {
             throw new TypeError(
                 `Expected MicroEmbedder instance for embedder, but got ${embedder} (${typeof embedder})`,
@@ -34,8 +38,13 @@ export class MicroRAG {
             )
         }
 
+        if (isDef(llm) && !isMicroLLM(llm)) {
+            throw new TypeError(`Expected llm to expose complete(params), but got ${llm} (${typeof llm})`)
+        }
+
         this.#embedder = embedder
         this.#vectorStore = vectorStore
+        this.#llm = llm
     }
 
     /**
@@ -93,5 +102,50 @@ export class MicroRAG {
             ragSystemPromptLines.push(`<${tagName} metadata=${JSON.stringify(metadata)}>\n${text}\n</${tagName}>`)
         }
         return createSystemMessage(ragSystemPromptLines.join('\n\n'))
+    }
+
+    /**
+     * Completes a thread by augmenting it with similarity context when available.
+     */
+    async complete(params: MicroLLMCompleteParams<TConfig>): Promise<SupportedMessage> {
+        if (!isObj(params)) {
+            throw new TypeError(`Expected object for params, but got ${params} (${typeof params})`)
+        }
+
+        if (!isDef(this.#llm)) {
+            throw new Error('MicroRAG requires an llm delegate to use complete().')
+        }
+
+        const { messages, config, signal, tools, onToken } = params
+        if (!isArr(messages)) {
+            throw new TypeError(`Expected array for messages, but got ${messages} (${typeof messages})`)
+        }
+
+        const lastUserMessage = this.getLastUserMessage(messages)
+        if (!isDef(lastUserMessage)) {
+            return this.#llm.complete({ messages, config, signal, tools, onToken })
+        }
+
+        const similaritySystemMessage = await this.getSimilaritySystemMessage(lastUserMessage.content)
+        const ragMessages = isDef(similaritySystemMessage) ? [similaritySystemMessage, ...messages] : messages
+
+        return this.#llm.complete({
+            messages: ragMessages,
+            config,
+            signal,
+            tools,
+            onToken,
+        })
+    }
+
+    private getLastUserMessage(messages: SupportedMessage[]): { content: string } | undefined {
+        for (let i = messages.length - 1; i >= 0; i--) {
+            const message = messages[i]
+            if (message.role === 'user' && isStr(message.content)) {
+                return { content: message.content }
+            }
+        }
+
+        return undefined
     }
 }
