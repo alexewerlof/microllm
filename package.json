@@ -53,8 +53,8 @@
         "tool-calling"
     ],
     "dependencies": {
-        "@huggingface/transformers": "^4.0.1",
-        "jty": "^6.2.0"
+        "@huggingface/transformers": "^4.2.0",
+        "jty": "^6.3.1"
     },
     "devDependencies": {
         "@eslint/js": "^10.0.1",
