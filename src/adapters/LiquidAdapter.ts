@@ -128,7 +128,9 @@ function tryParseAsToolCallsMessage(rawAssistantResponse: string): ToolCallsMess
 
     const inner = rawAssistantResponse.substring(afterStartIdx, endIdx).trim()
     if (!inner.startsWith('[') || !inner.endsWith(']')) {
-        throw new SyntaxError(`Expected tool call to be wrapped in brackets, but got: ${inner} in ${rawAssistantResponse}`)
+        throw new SyntaxError(
+            `Expected tool call to be wrapped in brackets, but got: ${inner} in ${rawAssistantResponse}`,
+        )
     }
 
     return { role: 'assistant', tool_calls: parsePythonToolCallObj(inner) }

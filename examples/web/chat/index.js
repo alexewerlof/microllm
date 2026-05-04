@@ -65,9 +65,13 @@ async function chatCompletion(userInput, onToken) {
     console.log('Response:')
     const maxNewTokens = parseInt(jjDoc.find('#max-new-tokens', true).getValue(), 10) || 512
     console.debug({ maxNewTokens })
-    const assistantMessage = await llm.complete({ messages, onToken, config: {
-        max_new_tokens: maxNewTokens,
-    }})
+    const assistantMessage = await llm.complete({
+        messages,
+        onToken,
+        config: {
+            max_new_tokens: maxNewTokens,
+        },
+    })
     console.log(assistantMessage)
     messages.push(assistantMessage)
 }
@@ -87,7 +91,9 @@ async function sendPrompt() {
     jjPrompt.setValue('')
 
     const jjAssistantMessage = h('div')
-    const jjChatResponse = h('div', null,
+    const jjChatResponse = h(
+        'div',
+        null,
         h('h2', null, 'User'),
         h('div', null, userPrompt),
         h('h2', null, 'Assistant'),

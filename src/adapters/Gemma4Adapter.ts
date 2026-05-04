@@ -191,7 +191,9 @@ function parseJsonIfPossible(value: string): unknown {
     }
 }
 
-function toolCallObjToGemma4ToolCallObj(toolCall: ToolCallObj): { function: { name: string; arguments: Record<string, unknown> } } {
+function toolCallObjToGemma4ToolCallObj(toolCall: ToolCallObj): {
+    function: { name: string; arguments: Record<string, unknown> }
+} {
     return {
         function: {
             name: toolCall.function.name,

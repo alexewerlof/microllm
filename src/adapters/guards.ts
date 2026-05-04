@@ -13,5 +13,10 @@ import { ChatModelAdapter } from './types.js'
  * ```
  */
 export function isChatModelAdapter(x: unknown): x is ChatModelAdapter {
-    return isObj(x) && hasProp(x, 'onBeforeChatTemplate', 'onAfterDecode') && isFn(x.onBeforeChatTemplate) && isFn(x.onAfterDecode)
+    return (
+        isObj(x) &&
+        hasProp(x, 'onBeforeChatTemplate', 'onAfterDecode') &&
+        isFn(x.onBeforeChatTemplate) &&
+        isFn(x.onAfterDecode)
+    )
 }

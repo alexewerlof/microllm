@@ -54,7 +54,11 @@ async function main() {
         const resultMessages = await agent.work({ messages, tools })
         console.log(resultMessages)
         const lastMessage = resultMessages[resultMessages.length - 1]
-        if (isAssistantMessage(lastMessage) && isStr(lastMessage.content) && lastMessage.content.toUpperCase().endsWith('STOP')) {
+        if (
+            isAssistantMessage(lastMessage) &&
+            isStr(lastMessage.content) &&
+            lastMessage.content.toUpperCase().endsWith('STOP')
+        ) {
             break
         }
         messages.push(...resultMessages, createUserMessage('Call the function again.'))
