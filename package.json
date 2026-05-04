@@ -33,10 +33,9 @@
         "example": "node --import tsx",
         "doc": "typedoc src/index.ts",
         "prebuild": "rm -rf lib doc",
-        "build": "tsup --dts && npm run doc",
-        "preversion": "npm run fmt && npm t",
-        "prepublishOnly": "npm run build",
-        "postversion": "git push && git push --tags"
+        "build": "npm run fmt && npm run typecheck && npm t && tsup --dts && npm run doc",
+        "preversion": "npm run build",
+        "prepublishOnly": "npm run build"
     },
     "keywords": [
         "javascript",
